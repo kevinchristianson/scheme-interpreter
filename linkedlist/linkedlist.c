@@ -1,5 +1,8 @@
-#import <stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
+typedef enum {INT_TYPE,DOUBLE_TYPE,STR_TYPE,CONS_TYPE,FLOAT_TYPE,NULL_TYPE} valueType;
 
 struct Value {
     valueType type; // type will also have a CONS_TYPE as an option
@@ -7,7 +10,7 @@ struct Value {
         int i;
         double d;
         float f;
-        char c;
+        char *str;
         struct ConsCell {
             struct Value *car;
             struct Value *cdr;
@@ -15,17 +18,22 @@ struct Value {
     };
 };
 
-
 typedef struct Value Value;
 
 // Create a new NULL_TYPE value node.
 Value *makeNull(){
-  return malloc(sizeof(Value));
+  Value *lst;
+  lst = (Value *) malloc(sizeof(Value));
+  lst->type = NULL_TYPE;
+  return lst;
 }
 
 // Create a new CONS_TYPE value node.
 Value *cons(Value *car, Value *cdr){
-  return malloc(sizeof(Value));
+  Value *lst;
+  lst = (Value *) malloc(sizeof(Value));
+  lst->type = NULL_TYPE;
+  return lst;
 }
 
 // Display the contents of the linked list to the screen in some kind of
@@ -52,7 +60,7 @@ Value *reverse(Value *list){
 // ANS: There won't be for this assignment. There will be later, but that will
 // be after we've got an easier way of managing memory.
 void cleanup(Value *list){
-  return;
+  free(list);
 }
 
 // Utility to make it less typing to get car value. Use assertions to make sure

@@ -1,0 +1,8 @@
+
+linkedlist/linkedlist
+
+*.plist
+
+linkedlist/linkedlist.dSYM/Contents/Resources/DWARF/linkedlist
+
+*.o
