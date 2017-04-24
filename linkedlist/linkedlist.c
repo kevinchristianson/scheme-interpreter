@@ -43,7 +43,6 @@ Value *cons(Value *car, Value *cdr){
 // readable format
 void display(Value *list){
   assert(list->type == CONS_TYPE);
-  Value *pointer = list;
   printf("(");
   while(list->type != NULL_TYPE){
     switch (list->c.car->type) {
@@ -67,7 +66,6 @@ void display(Value *list){
     list = list -> c.cdr;
   }
   printf(")\n");
-  list = pointer;
 }
 
 // Return a new list that is the reverse of the one that is passed in. All
@@ -94,11 +92,11 @@ Value *reverse(Value *list){
 // be after we've got an easier way of managing memory.
 void cleanup(Value *list){
   while(list->type != NULL_TYPE){
-    Value *next = list;
-    next = list->c.cdr;
+    Value *next = list->c.cdr;
     free(list);
     list = next;
   }
+  free(list);
 }
 
 // Utility to make it less typing to get car value. Use assertions to make sure

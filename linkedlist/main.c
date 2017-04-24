@@ -20,20 +20,16 @@ int main() {
     Value *head = makeNull();
     head = cons(val1,head);
     head = cons(val2,head);
+    
+    Value *rev = reverse(head);
 
     display(head);
-    display(reverse(head));
+    display(rev);
     printf("Length = %i\n",length(head));
     printf("Empty? %i\n",isNull(head));
-
-
-    Value *tail = makeNull();
-    printf("Empty? %i\n",isNull(tail));
-
-    tail = car(head);
-    head = cdr(head);
-    display(head);
-    display(tail);
-
+    
+    free(val1);
+    free(val2);
     cleanup(head);
+    cleanup(rev);
 }
