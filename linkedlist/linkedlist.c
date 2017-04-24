@@ -32,14 +32,42 @@ Value *makeNull(){
 Value *cons(Value *car, Value *cdr){
   Value *lst;
   lst = (Value *) malloc(sizeof(Value));
-  lst->type = NULL_TYPE;
+  lst->type = CONS_TYPE;
+  lst->c.car = car;
+  lst->c.cdr = cdr;
   return lst;
 }
 
 // Display the contents of the linked list to the screen in some kind of
 // readable format
 void display(Value *list){
-  return;
+  Value *pointer = list;
+  int flag = 1;
+  printf("(");
+  while((list->type != NULL_TYPE) && (flag == 1)){
+    switch (list->c.car->type) {
+      case INT_TYPE:
+        printf("%i ", list->c.car->i);
+        break;
+      case DOUBLE_TYPE:
+        printf("%f ", list->c.car->d);
+        break;
+      case FLOAT_TYPE:
+        printf("%f ", list->c.car->f);
+        break;
+      case STR_TYPE:
+        printf("%s ", list->c.car->str);
+        break;
+      case NULL_TYPE:
+        flag = 0;
+        break;
+      case CONS_TYPE:
+        break;
+    }
+    list = list -> c.cdr;
+  }
+  printf(")\n");
+  list = pointer;
 }
 
 // Return a new list that is the reverse of the one that is passed in. All
