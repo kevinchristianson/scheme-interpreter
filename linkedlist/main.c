@@ -22,7 +22,18 @@ int main() {
     head = cons(val2,head);
 
     display(head);
+    display(reverse(head));
     printf("Length = %i\n",length(head));
     printf("Empty? %i\n",isNull(head));
+
+
+    Value *tail = makeNull();
+    printf("Empty? %i\n",isNull(tail));
+
+    tail = car(head);
+    head = cdr(head);
+    display(head);
+    display(tail);
+
     cleanup(head);
 }

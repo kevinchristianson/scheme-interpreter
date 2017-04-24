@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 typedef enum {INT_TYPE,DOUBLE_TYPE,STR_TYPE,CONS_TYPE,FLOAT_TYPE,NULL_TYPE} valueType;
 
@@ -41,10 +42,10 @@ Value *cons(Value *car, Value *cdr){
 // Display the contents of the linked list to the screen in some kind of
 // readable format
 void display(Value *list){
+  assert(list->type == CONS_TYPE);
   Value *pointer = list;
-  int flag = 1;
   printf("(");
-  while((list->type != NULL_TYPE) && (flag == 1)){
+  while(list->type != NULL_TYPE){
     switch (list->c.car->type) {
       case INT_TYPE:
         printf("%i ", list->c.car->i);
@@ -59,7 +60,6 @@ void display(Value *list){
         printf("%s ", list->c.car->str);
         break;
       case NULL_TYPE:
-        flag = 0;
         break;
       case CONS_TYPE:
         break;
@@ -78,7 +78,12 @@ void display(Value *list){
 // ANS: There won't be for this assignment. There will be later, but that will
 // be after we've got an easier way of managing memory.
 Value *reverse(Value *list){
-  return malloc(sizeof(Value));
+  Value *new = makeNull();
+  while(list->type != NULL_TYPE){
+    new = cons(list->c.car,new);
+    list = list -> c.cdr;
+  }
+  return new;
 }
 
 // Frees up all memory directly or indirectly referred to by list. Note that
@@ -88,29 +93,43 @@ Value *reverse(Value *list){
 // ANS: There won't be for this assignment. There will be later, but that will
 // be after we've got an easier way of managing memory.
 void cleanup(Value *list){
-  free(list);
+  while(list->type != NULL_TYPE){
+    Value *next = list;
+    next = list->c.cdr;
+    free(list);
+    list = next;
+  }
 }
 
 // Utility to make it less typing to get car value. Use assertions to make sure
 // that this is a legitimate operation.
 Value *car(Value *list){
-  return malloc(sizeof(Value));
+  assert(list->type == CONS_TYPE);
+  return list->c.car;
 }
 
 // Utility to make it less typing to get cdr value. Use assertions to make sure
 // that this is a legitimate operation.
 Value *cdr(Value *list){
-  return malloc(sizeof(Value));
+  assert(list->type == CONS_TYPE);
+  return list->c.cdr;
 }
 
 // Utility to check if pointing to a NULL_TYPE value. Use assertions to make sure
 // that this is a legitimate operation.
 bool isNull(Value *value){
-  return false;
+  assert(value->type == NULL_TYPE || value->type == CONS_TYPE);
+  return (value->type == NULL_TYPE);
 }
 
 // Measure length of list. Use assertions to make sure that this is a legitimate
 // operation.
 int length(Value *value){
-  return -1;
+  assert(value->type == CONS_TYPE);
+  int counter = 0;
+  while(value->type != NULL_TYPE){
+    counter++;
+    value = value->c.cdr;
+  }
+  return counter;
 }
