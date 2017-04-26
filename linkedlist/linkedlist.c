@@ -46,6 +46,33 @@ void display(Value *list){
   printf(")\n");
 }
 
+
+Value *duplicate(Value *value){
+  Value *temp = (Value *) malloc(sizeof(Value));
+  temp->type = value->type;
+  switch (value->type) {
+    case INT_TYPE:
+      temp->i = value->i;
+      break;
+    case DOUBLE_TYPE:
+      temp->d = value->d;
+      break;
+    case STR_TYPE:
+      temp->s = value->s;
+      break;
+    case NULL_TYPE:
+      break;
+    case CONS_TYPE:
+//      temp->c.car = duplicate(value->c.car);
+//      temp->c.cdr = duplicate(value->c.cdr);
+      break;
+  }
+  return temp;
+}
+
+
+
+
 // Return a new list that is the reverse of the one that is passed in. All
 // content within the list should be duplicated; there should be no shared
 // memory between the original list and the new one.
@@ -56,11 +83,14 @@ void display(Value *list){
 Value *reverse(Value *list){
   Value *new = makeNull();
   while(list->type != NULL_TYPE){
-    new = cons(list->c.car,new);
+    Value *temp = duplicate(list->c.car);
+    new = cons(temp, new);
     list = list->c.cdr;
   }
   return new;
 }
+
+
 
 // Frees up all memory directly or indirectly referred to by list. Note that
 // this linked list might consist of linked lists as items, so you'll need to
