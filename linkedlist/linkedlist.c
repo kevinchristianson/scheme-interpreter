@@ -2,24 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-
-typedef enum {INT_TYPE,DOUBLE_TYPE,STR_TYPE,CONS_TYPE,FLOAT_TYPE,NULL_TYPE} valueType;
-
-struct Value {
-    valueType type;
-    union {
-        int i;
-        double d;
-        float f;
-        char *str;
-        struct ConsCell {
-            struct Value *car;
-            struct Value *cdr;
-        } c;
-    };
-};
-
-typedef struct Value Value;
+#include "linkedlist.h"
 
 // Create a new NULL_TYPE value node.
 Value *makeNull(){
@@ -52,11 +35,8 @@ void display(Value *list){
       case DOUBLE_TYPE:
         printf("%f ", list->c.car->d);
         break;
-      case FLOAT_TYPE:
-        printf("%f ", list->c.car->f);
-        break;
       case STR_TYPE:
-        printf("%s ", list->c.car->str);
+        printf("%s ", list->c.car->s);
         break;
       case NULL_TYPE:
         break;
@@ -93,6 +73,24 @@ Value *reverse(Value *list){
 void cleanup(Value *list){
   while(list->type != NULL_TYPE){
     Value *next = list->c.cdr;
+    //free(list->c.car->type);
+    switch (list->c.car->type) {
+      case INT_TYPE:
+        free(list->c.car);
+        break;
+      case DOUBLE_TYPE:
+        free(list->c.car);
+        break;
+      case STR_TYPE:
+        free(list->c.car);
+        break;
+      case NULL_TYPE:
+        free(list->c.car);
+        break;
+      case CONS_TYPE:
+        free(list->c.car);
+        break;
+    }
     free(list);
     list = next;
   }
