@@ -33,7 +33,10 @@ int main() {
     display(rev);
     printf("Length = 3? %i\n",length(head));
     printf("Empty = 0? %i\n",isNull(head));
-    printf("Empty = 1? %i\n", isNull(makeNull()));
+
+    Value *nullChecker = makeNull();
+    printf("Empty = 1? %i\n", isNull(nullChecker));
+    cleanup(nullChecker);
     cleanup(head);
     cleanup(rev);
 }
