@@ -17,19 +17,29 @@ int main() {
     val2->type = DOUBLE_TYPE;
     val2->d = 4.3;
 
+    Value *val3 = malloc(sizeof(Value));
+    val3->type = STR_TYPE;
+    val3->str = "hello";
+
+    Value *val4 = malloc(sizeof(Value));
+    val4->type = FLOAT_TYPE;
+    val4->f = 4.3;
+
     Value *head = makeNull();
     head = cons(val1,head);
     head = cons(val2,head);
-    
+    head = cons(val3, head);
+    head = cons(val4, head);
+
     Value *rev = reverse(head);
 
     display(head);
     display(rev);
-    printf("Length = %i\n",length(head));
-    printf("Empty? %i\n",isNull(head));
-    
-    free(val1);
-    free(val2);
+    printf("Length = 4? %i\n",length(head));
+    printf("Empty = 0? %i\n",isNull(head));
+    printf("Empty = 1 %i\n", isNull(makeNull()));
+  //  free(val1);
+  //  free(val2);
     cleanup(head);
     cleanup(rev);
 }
