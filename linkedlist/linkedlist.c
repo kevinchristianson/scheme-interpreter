@@ -2,37 +2,18 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-
-typedef enum {INT_TYPE,DOUBLE_TYPE,STR_TYPE,CONS_TYPE,FLOAT_TYPE,NULL_TYPE} valueType;
-
-struct Value {
-    valueType type;
-    union {
-        int i;
-        double d;
-        float f;
-        char *str;
-        struct ConsCell {
-            struct Value *car;
-            struct Value *cdr;
-        } c;
-    };
-};
-
-typedef struct Value Value;
+#include "linkedlist.h"
 
 // Create a new NULL_TYPE value node.
 Value *makeNull(){
-  Value *lst;
-  lst = (Value *) malloc(sizeof(Value));
+  Value *lst = (Value *) malloc(sizeof(Value));
   lst->type = NULL_TYPE;
   return lst;
 }
 
 // Create a new CONS_TYPE value node.
 Value *cons(Value *car, Value *cdr){
-  Value *lst;
-  lst = (Value *) malloc(sizeof(Value));
+  Value *lst = (Value *) malloc(sizeof(Value));
   lst->type = CONS_TYPE;
   lst->c.car = car;
   lst->c.cdr = cdr;
@@ -52,11 +33,8 @@ void display(Value *list){
       case DOUBLE_TYPE:
         printf("%f ", list->c.car->d);
         break;
-      case FLOAT_TYPE:
-        printf("%f ", list->c.car->f);
-        break;
       case STR_TYPE:
-        printf("%s ", list->c.car->str);
+        printf("%s ", list->c.car->s);
         break;
       case NULL_TYPE:
         break;
@@ -79,7 +57,7 @@ Value *reverse(Value *list){
   Value *new = makeNull();
   while(list->type != NULL_TYPE){
     new = cons(list->c.car,new);
-    list = list -> c.cdr;
+    list = list->c.cdr;
   }
   return new;
 }
@@ -91,10 +69,9 @@ Value *reverse(Value *list){
 // ANS: There won't be for this assignment. There will be later, but that will
 // be after we've got an easier way of managing memory.
 void cleanup(Value *list){
-  while(list->type != NULL_TYPE){
-    Value *next = list->c.cdr;
-    free(list);
-    list = next;
+  if(list->type == CONS_TYPE){
+    cleanup(list->c.car);
+    cleanup(list->c.cdr);
   }
   free(list);
 }
