@@ -1,3 +1,6 @@
+// Created by Jack Kennelly, Kevin Christianson, and Holden Greenberg.
+// Implementation of a linked list structure to emulate a Scheme list.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -46,7 +49,9 @@ void display(Value *list){
   printf(")\n");
 }
 
-
+// Helper function for reverse. It creates a duplicate spot in memory holding the same
+// value. The original value is passed in as a pointer. This prevents pointer errors from
+// occuring during cleanup.
 Value *duplicate(Value *value){
   Value *temp = (Value *) malloc(sizeof(Value));
   temp->type = value->type;
@@ -63,8 +68,6 @@ Value *duplicate(Value *value){
     case NULL_TYPE:
       break;
     case CONS_TYPE:
-//      temp->c.car = duplicate(value->c.car);
-//      temp->c.cdr = duplicate(value->c.cdr);
       break;
   }
   return temp;
