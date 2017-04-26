@@ -126,7 +126,7 @@ Value *cdr(Value *list){
 // Utility to check if pointing to a NULL_TYPE value. Use assertions to make sure
 // that this is a legitimate operation.
 bool isNull(Value *value){
-  assert(value->type == NULL_TYPE || value->type == CONS_TYPE);
+  assert(value != NULL);
   return (value->type == NULL_TYPE);
 }
 
