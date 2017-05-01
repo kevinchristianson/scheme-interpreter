@@ -43,6 +43,16 @@ void display(Value *list){
         break;
       case CONS_TYPE:
         break;
+      case PTR_TYPE:
+        printf("%p", list->c.car->p);
+      case OPEN_TYPE:
+        printf("%s", list->c.car->s);
+      case CLOSE_TYPE:
+        printf("%s", list->c.car->s);
+      case BOOL_TYPE:
+        printf("%i", list->c.car->i);
+      case SYMBOL_TYPE:
+        printf("%s", list->c.car->s);
     }
     list = list -> c.cdr;
   }
@@ -68,6 +78,16 @@ Value *duplicate(Value *value){
     case NULL_TYPE:
       break;
     case CONS_TYPE:
+      break;
+    case PTR_TYPE:
+      break;
+    case OPEN_TYPE:
+      break;
+    case CLOSE_TYPE:
+      break;
+    case BOOL_TYPE:
+      break;
+    case SYMBOL_TYPE:
       break;
   }
   return temp;
@@ -101,13 +121,13 @@ Value *reverse(Value *list){
 // FAQ: What if there are nested lists inside that list?
 // ANS: There won't be for this assignment. There will be later, but that will
 // be after we've got an easier way of managing memory.
-void cleanup(Value *list){
+/*void cleanup(Value *list){
   if(list->type == CONS_TYPE){
     cleanup(list->c.car);
     cleanup(list->c.cdr);
   }
   free(list);
-}
+}*/
 
 // Utility to make it less typing to get car value. Use assertions to make sure
 // that this is a legitimate operation.
