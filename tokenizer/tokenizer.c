@@ -30,16 +30,44 @@ Value *tokenize(){
         } else if (strchr(symbolSet, charRead)){
             Value *val = talloc(sizeof(Value));
             val->type = SYMBOL_TYPE;
-            char *temp = talloc(sizeof(char));
+            char *temp = str[2];
             temp[0] = charRead;
             val->s = temp;
             cons(val, list);
         } else if (strchr(letterSet, charRead)){
-            char *temp = talloc(sizeof(char));
+            char *temp = str[256];
+            int counter = 0;
             while (charRead != ' '){
-                
+                temp[counter] = charRead;
+                counter++;
                 charRead = fgetc(stdin);
             }
+            Value *val = talloc(sizeof(Value));
+            val->type = SYMBOL_TYPE;
+            val->s = temp;
+            cons(val, list);
+        } else if(strchr(numberset, charRead)){
+            char *temp = str[256];
+            int counter = 0;
+            int flag = 0;
+            while (charRead != ' '){
+                temp[counter] = charRead;
+                counter++;
+                charRead = fgetc(stdin);
+                if (charRead == '.'){
+                    flag = 1;
+                }
+            }
+            //Still need to convert string to integer / double
+            Value *val = talloc(sizeof(Value));
+            if (flag == 0){
+                val->type = INT_TYPE;
+                val->i = temp;
+            } else {
+                val->type = DOUBLE_TYPE;
+                val->d = temp;
+            }
+            cons(val, list);
         }
         charRead = fgetc(stdin);
     }
