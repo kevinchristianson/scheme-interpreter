@@ -15,19 +15,19 @@ Value *tokenize(){
     char* symbolSet = "!$%&*/:<=>?~_^";
     char* letterSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     char* numberSet = "0123456789";
-    while (charRead != EOF) {
+    while (charRead != -1) {
         if (charRead == '(') {
             Value *val = talloc(sizeof(Value));
             val->type = OPEN_TYPE;
             val->s = "(";
-            cons(val, list);
+            list = cons(val, list);
         } else if (charRead == ')') {
             Value *val = talloc(sizeof(Value));
             val->type = CLOSE_TYPE;
             val->s = ")";
-            cons(val, list);
+            list = cons(val, list);
         } else if (charRead == ';'){
-            while (charRead != '\n'){
+            while (charRead != '\n' && charRead != -1){
                 charRead = fgetc(stdin);
             }
         } else if (strchr(symbolSet, charRead)){
@@ -46,11 +46,11 @@ Value *tokenize(){
                 val->s = talloc(2*(sizeof(char)));
                 val->s[0] = charRead;
             }
-            cons(val, list);
+            list = cons(val, list);
         } else if (strchr(letterSet, charRead)){
             char *temp = talloc(100*sizeof(char));
             int counter = 0;
-            while (charRead != ' '){
+            while (charRead != ' ' && charRead != -1){
                 temp[counter] = charRead;
                 counter++;
                 charRead = fgetc(stdin);
@@ -58,13 +58,15 @@ Value *tokenize(){
             Value *val = talloc(sizeof(Value));
             val->type = STR_TYPE;
             val->s = temp;
-            cons(val, list);
+            list = cons(val, list);
         } else if(strchr(numberSet, charRead)){
             char *temp = talloc(100*sizeof(char));
             int counter = 0;
             int flag = 0;
-            while (charRead != ' '){
-                temp[counter] = charRead;
+            while (charRead != ' ' && charRead != -1){
+                char *smallStr = talloc(2*sizeof(char));
+                smallStr[0] = charRead;
+                strcat(temp, smallStr);
                 counter++;
                 charRead = fgetc(stdin);
                 if (charRead == '.'){
@@ -80,7 +82,7 @@ Value *tokenize(){
                 val->type = (double) DOUBLE_TYPE;
                 sscanf(temp, "%d", &val->i);
             }
-            cons(val, list);
+            list = cons(val, list);
         }
         charRead = fgetc(stdin);
     }
@@ -125,6 +127,8 @@ Value *tokenize(){
 
 // Displays the contents of the linked list as tokens, with type information
 void displayTokens(Value *list){
+//    printf("%u\n", list->type);
+//    fflush(stdout);
     assert(list->type == CONS_TYPE);
     while(list->type != CONS_TYPE){
         switch (list->c.car->type) {
@@ -145,12 +149,16 @@ void displayTokens(Value *list){
                 break;
             case OPEN_TYPE:
                 printf("%s%s", list->c.car->s, " :open");
+                break;
             case CLOSE_TYPE:
                 printf("%s%s", list->c.car->s, " :close");
+                break;
             case BOOL_TYPE:
                 printf("%i%s", list->c.car->i, " :boolean");
+                break;
             case SYMBOL_TYPE:
                 printf("%s%s", list->c.car->s, " :symbol");
+                break;
         }
         list = list -> c.cdr;
         printf(")\n");

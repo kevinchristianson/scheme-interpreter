@@ -45,14 +45,19 @@ void display(Value *list){
         break;
       case PTR_TYPE:
         printf("%p", list->c.car->p);
+        break;
       case OPEN_TYPE:
         printf("%s", list->c.car->s);
+        break;
       case CLOSE_TYPE:
         printf("%s", list->c.car->s);
+        break;
       case BOOL_TYPE:
         printf("%i", list->c.car->i);
+        break;
       case SYMBOL_TYPE:
         printf("%s", list->c.car->s);
+        break;
     }
     list = list -> c.cdr;
   }
