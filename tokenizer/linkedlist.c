@@ -7,16 +7,17 @@
 #include <assert.h>
 #include "linkedlist.h"
 
+
 // Create a new NULL_TYPE value node.
 Value *makeNull(){
-  Value *lst = (Value *) malloc(sizeof(Value));
+  Value *lst = (Value *) talloc(sizeof(Value));
   lst->type = NULL_TYPE;
   return lst;
 }
 
 // Create a new CONS_TYPE value node.
 Value *cons(Value *car, Value *cdr){
-  Value *lst = (Value *) malloc(sizeof(Value));
+  Value *lst = (Value *) talloc(sizeof(Value));
   lst->type = CONS_TYPE;
   lst->c.car = car;
   lst->c.cdr = cdr;
