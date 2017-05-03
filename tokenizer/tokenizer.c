@@ -5,6 +5,7 @@
 #include "talloc.h"
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
 
 // Read all of the input from stdin, and return a linked list consisting of the
 // tokens.
@@ -14,7 +15,7 @@ Value *tokenize(){
     charRead = fgetc(stdin);
     char* symbolSet = "!$%&*/:<=>?~_^+-";
     char* letterSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    char* numberSet = "0123456789";
+    char* numberSet = ".0123456789";
     while (charRead != -1) {
         if (charRead == '(') {
             Value *val = talloc(sizeof(Value));
@@ -30,6 +31,19 @@ Value *tokenize(){
             while (charRead != '\n' && charRead != -1){
                 charRead = fgetc(stdin);
             }
+        }else if(charRead == '\''){
+            printf("entered");
+            char *temp = talloc(100*sizeof(char));
+            int counter = 0;
+            while (charRead != '\''){
+                temp[counter] = charRead;
+                counter++;
+                charRead = fgetc(stdin);
+            }
+            Value *val = talloc(sizeof(Value));
+            val->type = STR_TYPE;
+            val->s = temp;
+            list = cons(val, list);
         } else if (strchr(symbolSet, charRead)){
             Value *val = talloc(sizeof(Value));
             val->type = SYMBOL_TYPE;
@@ -58,7 +72,7 @@ Value *tokenize(){
             }
             charRead = ungetc(charRead, stdin);
             Value *val = talloc(sizeof(Value));
-            val->type = STR_TYPE;
+            val->type = SYMBOL_TYPE;
             val->s = temp;
             list = cons(val, list);
         } else if(strchr(numberSet, charRead)){
@@ -66,9 +80,7 @@ Value *tokenize(){
             int counter = 0;
             int flag = 0;
             while (strchr(numberSet, charRead)){
-                char *smallStr = talloc(2*sizeof(char));
-                smallStr[0] = charRead;
-                strcat(temp, smallStr);
+                temp[counter] = charRead;
                 counter++;
                 charRead = fgetc(stdin);
                 if (charRead == '.'){
@@ -76,15 +88,14 @@ Value *tokenize(){
                 }
             }
             charRead = ungetc(charRead, stdin);
-            //Still need to convert string to integer / double
             Value *val = talloc(sizeof(Value));
-            char *ptr;
+            char *end;
             if (flag == 0){
                 val->type = INT_TYPE;
-                val->i = strtol(temp, &ptr, 10);
+                val->i = strtol(temp, &end, 10);
             } else {
-                val->type = (double) DOUBLE_TYPE;
-                val->d = strtol(temp, &ptr, 10);
+                val->type = DOUBLE_TYPE;
+                val->d = strtod(temp, &end);
             }
             list = cons(val, list);
         }
