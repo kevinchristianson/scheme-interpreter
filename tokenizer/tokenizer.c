@@ -12,7 +12,7 @@ Value *tokenize(){
     char charRead;
     Value *list = makeNull();
     charRead = fgetc(stdin);
-    char* symbolSet = "!$%&*/:<=>?~_^";
+    char* symbolSet = "+-!$%&*/:<=>?~_^";
     char* letterSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     char* numberSet = "0123456789";
     while (charRead != -1) {
@@ -33,6 +33,7 @@ Value *tokenize(){
         } else if (strchr(symbolSet, charRead)){
             Value *val = talloc(sizeof(Value));
             val->type = SYMBOL_TYPE;
+            char *temp = talloc(2*sizeof(char));
             if(charRead == '#'){
                 val->s = talloc(3*sizeof(char));
                 val->s[0] = charRead;
@@ -40,11 +41,11 @@ Value *tokenize(){
                 if(charRead == 't' || charRead == 'f'){
                     val->s[1] = charRead;
                 }else{
-                    printf("%s\n", "Syntax error: untokenizable");
+                    printf("Syntax error: untokenizable");
                 }
             }else{
-                val->s = talloc(2*(sizeof(char)));
-                val->s[0] = charRead;
+                temp[0] = charRead;
+                val->s = temp;
             }
             list = cons(val, list);
         } else if (strchr(letterSet, charRead)){

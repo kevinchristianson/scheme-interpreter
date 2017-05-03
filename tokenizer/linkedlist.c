@@ -111,8 +111,7 @@ Value *duplicate(Value *value){
 Value *reverse(Value *list){
   Value *new = makeNull();
   while(list->type != NULL_TYPE){
-    Value *temp = duplicate(list->c.car);
-    new = cons(temp, new);
+    new = cons(list->c.car, new);
     list = list->c.cdr;
   }
   return new;
