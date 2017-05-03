@@ -16,6 +16,7 @@ Value *tokenize(){
     char* symbolSet = "!$%&*/:<=>?~_^+-";
     char* letterSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     char* numberSet = ".0123456789";
+    int j;
     while (charRead != -1) {
         if (charRead == '(') {
             Value *val = talloc(sizeof(Value));
@@ -33,6 +34,9 @@ Value *tokenize(){
             }
         }else if(charRead == '\"'){
             char *temp = talloc(1000*sizeof(char));
+            for (j = 0; j < 1000; j++){
+                temp[j] = 0;
+            }
             int counter = 0;
             charRead = fgetc(stdin);
             while (charRead != '\"'){
@@ -45,7 +49,10 @@ Value *tokenize(){
             val->s = temp;
             list = cons(val, list);
         }else if(charRead == '#'){
-            char *temp = talloc(2*sizeof(char));
+            char *temp = talloc(4*sizeof(char));
+            for (j = 0; j < 4; j++){
+                temp[j] = 0;
+            }
             Value *val = talloc(sizeof(Value));
             val->type = BOOL_TYPE;
             temp[0] = charRead;
@@ -55,18 +62,24 @@ Value *tokenize(){
                 val->s = temp;
                 list = cons(val, list);
             }else{
+                temp[1] = 0;
                 printf("Syntax error: untokenizable\n");
             }
-            list = cons(val, list);
         } else if (strchr(symbolSet, charRead)){
             Value *val = talloc(sizeof(Value));
             val->type = SYMBOL_TYPE;
             char *temp = talloc(2*sizeof(char));
+            for (j = 0; j < 2; j++){
+                temp[j] = 0;
+            }
             temp[0] = charRead;
             val->s = temp;
             list = cons(val, list);
         } else if (strchr(letterSet, charRead)){
-            char *temp = talloc(100*sizeof(char));
+            char *temp = talloc(1000*sizeof(char));
+            for (j = 0; j < 1000; j++){
+                temp[j] = 0;
+            }
             int counter = 0;
             while ((strchr(letterSet, charRead) || (strchr(numberSet, charRead)))){
                 temp[counter] = charRead;
@@ -80,6 +93,9 @@ Value *tokenize(){
             list = cons(val, list);
         } else if(strchr(numberSet, charRead)){
             char *temp = talloc(1000*sizeof(char));
+            for (j = 0; j < 1000; j++){
+                temp[j] = 0;
+            }
             int counter = 0;
             int flag = 0;
             while (strchr(numberSet, charRead)){
