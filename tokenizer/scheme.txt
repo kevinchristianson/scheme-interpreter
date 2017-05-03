@@ -1,3 +1,6 @@
-(define let ;; this is a comment
-	(lambda (x) “hfalsdjflas”
+(define tryAll ;; this is a comment
+	(lambda (x)
 		(+ 3.5 x)))
+"this is a string"
+#f #t
+5

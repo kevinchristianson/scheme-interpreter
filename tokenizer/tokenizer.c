@@ -31,11 +31,11 @@ Value *tokenize(){
             while (charRead != '\n' && charRead != -1){
                 charRead = fgetc(stdin);
             }
-        }else if(charRead == '\''){
-            printf("entered");
+        }else if(charRead == '\"'){
             char *temp = talloc(100*sizeof(char));
             int counter = 0;
-            while (charRead != '\''){
+            charRead = fgetc(stdin);
+            while (charRead != '\"'){
                 temp[counter] = charRead;
                 counter++;
                 charRead = fgetc(stdin);
@@ -44,23 +44,23 @@ Value *tokenize(){
             val->type = STR_TYPE;
             val->s = temp;
             list = cons(val, list);
+        }else if(charRead == '#'){
+            Value *val = talloc(sizeof(Value));
+            val->type = BOOL_TYPE;
+            val->s = talloc(3*sizeof(char));
+            val->s[0] = charRead;
+            charRead = fgetc(stdin);
+            if(charRead == 't' || charRead == 'f'){
+                val->s[1] = charRead;
+            }else{
+                printf("Syntax error: untokenizable\n");
+            }
         } else if (strchr(symbolSet, charRead)){
             Value *val = talloc(sizeof(Value));
             val->type = SYMBOL_TYPE;
             char *temp = talloc(2*sizeof(char));
-            if(charRead == '#'){
-                val->s = talloc(3*sizeof(char));
-                val->s[0] = charRead;
-                charRead = fgetc(stdin);
-                if(charRead == 't' || charRead == 'f'){
-                    val->s[1] = charRead;
-                }else{
-                    printf("Syntax error: untokenizable");
-                }
-            }else{
-                temp[0] = charRead;
-                val->s = temp;
-            }
+            temp[0] = charRead;
+            val->s = temp;
             list = cons(val, list);
         } else if (strchr(letterSet, charRead)){
             char *temp = talloc(100*sizeof(char));
@@ -133,7 +133,7 @@ void displayTokens(Value *list){
                 printf("%s: close\n", list->c.car->s);
                 break;
             case BOOL_TYPE:
-                printf("%i: boolean\n", list->c.car->i);
+                printf("%s: boolean\n", list->c.car->s);
                 break;
             case SYMBOL_TYPE:
                 printf("%s: symbol\n", list->c.car->s);
