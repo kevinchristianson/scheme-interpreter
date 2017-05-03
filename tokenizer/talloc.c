@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "talloc.h"
 
-Value *list; // Global variable used to store points for easy garbage collection.
+Value *garbage; // Global variable used to store points for easy garbage collection.
 int flag = -1; // Flag to check whether list has been instantiated or not.
 
 // Create a new CONS_TYPE value node. Works functionally the same as the version in
@@ -23,13 +23,13 @@ Value *innerCons(Value *car, Value *cdr){
 // dependencies, since you're going to modify the linked list to use talloc.
 void *talloc(size_t size){
     if (flag == -1){
-        list = (Value *) malloc(sizeof(Value));
-        list -> type = NULL_TYPE;
+        garbage = (Value *) malloc(sizeof(Value));
+        garbage -> type = NULL_TYPE;
         flag = 1;
     }
     Value *new = (Value *) malloc(size);
     new -> type = CONS_TYPE;
-    list = innerCons(new, list);
+    garbage = innerCons(new, garbage);
     return new;
     
 }
@@ -79,7 +79,7 @@ void cleanup(Value *list){
 // Free all pointers allocated by talloc, as well as whatever memory you
 // allocated in lists to hold those pointers.
 void tfree(){
-    cleanup(list);
+    cleanup(garbage);
     flag = -1;
 }
 
