@@ -32,7 +32,7 @@ Value *tokenize(){
                 charRead = fgetc(stdin);
             }
         }else if(charRead == '\"'){
-            char *temp = talloc(100*sizeof(char));
+            char *temp = talloc(1000*sizeof(char));
             int counter = 0;
             charRead = fgetc(stdin);
             while (charRead != '\"'){
@@ -45,13 +45,15 @@ Value *tokenize(){
             val->s = temp;
             list = cons(val, list);
         }else if(charRead == '#'){
+            char *temp = talloc(2*sizeof(char));
             Value *val = talloc(sizeof(Value));
             val->type = BOOL_TYPE;
-            val->s = talloc(3*sizeof(char));
-            val->s[0] = charRead;
+            temp[0] = charRead;
             charRead = fgetc(stdin);
             if(charRead == 't' || charRead == 'f'){
-                val->s[1] = charRead;
+                temp[1] = charRead;
+                val->s = temp;
+                list = cons(val, list);
             }else{
                 printf("Syntax error: untokenizable\n");
             }
@@ -76,7 +78,7 @@ Value *tokenize(){
             val->s = temp;
             list = cons(val, list);
         } else if(strchr(numberSet, charRead)){
-            char *temp = talloc(100*sizeof(char));
+            char *temp = talloc(1000*sizeof(char));
             int counter = 0;
             int flag = 0;
             while (strchr(numberSet, charRead)){
