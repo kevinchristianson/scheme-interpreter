@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include "linkedlist.h"
+#include "talloc.h"
 
 
 // Create a new NULL_TYPE value node.
@@ -64,42 +65,6 @@ void display(Value *list){
   }
   printf(")\n");
 }
-
-// Helper function for reverse. It creates a duplicate spot in memory holding the same
-// value. The original value is passed in as a pointer. This prevents pointer errors from
-// occuring during cleanup.
-Value *duplicate(Value *value){
-  Value *temp = (Value *) malloc(sizeof(Value));
-  temp->type = value->type;
-  switch (value->type) {
-    case INT_TYPE:
-      temp->i = value->i;
-      break;
-    case DOUBLE_TYPE:
-      temp->d = value->d;
-      break;
-    case STR_TYPE:
-      temp->s = value->s;
-      break;
-    case NULL_TYPE:
-      break;
-    case CONS_TYPE:
-      break;
-    case PTR_TYPE:
-        break;
-    case OPEN_TYPE:
-        break;
-    case CLOSE_TYPE:
-        break;
-    case BOOL_TYPE:
-        break;
-    case SYMBOL_TYPE:
-        break;
-  }
-  return temp;
-}
-
-
 
 
 // Return a new list that is the reverse of the one that is passed in. All

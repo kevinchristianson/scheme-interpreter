@@ -57,6 +57,7 @@ Value *tokenize(){
             }else{
                 printf("Syntax error: untokenizable\n");
             }
+            list = cons(val, list);
         } else if (strchr(symbolSet, charRead)){
             Value *val = talloc(sizeof(Value));
             val->type = SYMBOL_TYPE;
