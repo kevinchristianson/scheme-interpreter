@@ -85,15 +85,15 @@ Value *duplicate(Value *value){
     case CONS_TYPE:
       break;
     case PTR_TYPE:
-      break;
+        break;
     case OPEN_TYPE:
-      break;
+        break;
     case CLOSE_TYPE:
-      break;
+        break;
     case BOOL_TYPE:
-      break;
+        break;
     case SYMBOL_TYPE:
-      break;
+        break;
   }
   return temp;
 }
@@ -125,6 +125,7 @@ Value *reverse(Value *list){
 // FAQ: What if there are nested lists inside that list?
 // ANS: There won't be for this assignment. There will be later, but that will
 // be after we've got an easier way of managing memory.
+
 /*void cleanup(Value *list){
   if(list->type == CONS_TYPE){
     cleanup(list->c.car);

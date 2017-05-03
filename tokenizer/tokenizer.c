@@ -12,7 +12,7 @@ Value *tokenize(){
     char charRead;
     Value *list = makeNull();
     charRead = fgetc(stdin);
-    char* symbolSet = "+-!$%&*/:<=>?~_^";
+    char* symbolSet = "!$%&*/:<=>?~_^+-";
     char* letterSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     char* numberSet = "0123456789";
     while (charRead != -1) {
@@ -56,6 +56,7 @@ Value *tokenize(){
                 counter++;
                 charRead = fgetc(stdin);
             }
+            charRead = ungetc(charRead, stdin);
             Value *val = talloc(sizeof(Value));
             val->type = STR_TYPE;
             val->s = temp;
@@ -74,16 +75,16 @@ Value *tokenize(){
                     flag = 1;
                 }
             }
+            charRead = ungetc(charRead, stdin);
             //Still need to convert string to integer / double
             Value *val = talloc(sizeof(Value));
+            char *ptr;
             if (flag == 0){
                 val->type = INT_TYPE;
-                int num = atoi(temp);
-                val->i = num;
+                val->i = strtol(temp, &ptr, 10);
             } else {
                 val->type = (double) DOUBLE_TYPE;
-                double num = atoi(temp);
-                val->d = num;
+                val->d = strtol(temp, &ptr, 10);
             }
             list = cons(val, list);
         }
@@ -93,46 +94,9 @@ Value *tokenize(){
     return revList;
 }
 
-/* Value *makeValue(valueType type, void *value){
-    Value *val = talloc(sizeof(Value));
-    val->type = type;
-    switch (type) {
-    case INT_TYPE:
-      val->i = value;
-      break;
-    case DOUBLE_TYPE:
-      val->d = value;
-      break;
-    case STR_TYPE:
-      val->s = value;
-      break;
-    case NULL_TYPE:
-      break;
-    case CONS_TYPE:
-      break;
-    case PTR_TYPE:
-      break;
-    case OPEN_TYPE:
-      val->s = value;
-      break;
-    case CLOSE_TYPE:
-      val->s = value;
-      break;
-    case BOOL_TYPE:
-      val->i = value;
-      break;
-    case SYMBOL_TYPE:
-      val->s = value;
-      break;
-  }
-   return val;
-} */
-
 // Displays the contents of the linked list as tokens, with type information
 
 void displayTokens(Value *list){
-//    printf("%u\n", list->type);
-//    fflush(stdout);
     assert(list->type == CONS_TYPE);
     while(list->type != NULL_TYPE){
         switch (list->c.car->type) {
