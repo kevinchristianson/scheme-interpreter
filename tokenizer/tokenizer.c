@@ -50,7 +50,7 @@ Value *tokenize(){
         } else if (strchr(letterSet, charRead)){
             char *temp = talloc(100*sizeof(char));
             int counter = 0;
-            while (charRead != ' ' && charRead != -1){
+            while ((strchr(letterSet, charRead) || (strchr(numberSet, charRead)))){
                 temp[counter] = charRead;
                 counter++;
                 charRead = fgetc(stdin);
@@ -63,7 +63,7 @@ Value *tokenize(){
             char *temp = talloc(100*sizeof(char));
             int counter = 0;
             int flag = 0;
-            while (charRead != ' ' && charRead != -1){
+            while (strchr(numberSet, charRead)){
                 char *smallStr = talloc(2*sizeof(char));
                 smallStr[0] = charRead;
                 strcat(temp, smallStr);
@@ -77,10 +77,12 @@ Value *tokenize(){
             Value *val = talloc(sizeof(Value));
             if (flag == 0){
                 val->type = INT_TYPE;
-                sscanf(temp, "%i", &val->i);
+                int num = atoi(temp);
+                val->i = num;
             } else {
                 val->type = (double) DOUBLE_TYPE;
-                sscanf(temp, "%d", &val->i);
+                double num = atoi(temp);
+                val->d = num;
             }
             list = cons(val, list);
         }
@@ -126,20 +128,21 @@ Value *tokenize(){
 } */
 
 // Displays the contents of the linked list as tokens, with type information
+
 void displayTokens(Value *list){
 //    printf("%u\n", list->type);
 //    fflush(stdout);
     assert(list->type == CONS_TYPE);
-    while(list->type != CONS_TYPE){
+    while(list->type != NULL_TYPE){
         switch (list->c.car->type) {
             case INT_TYPE:
-                printf("%i%s", list->c.car->i, " :integer");
+                printf("%i: integer\n", list->c.car->i);
                 break;
             case DOUBLE_TYPE:
-                printf("%f%s", list->c.car->d, " :float");
+                printf("%f: float\n" , list->c.car->d);
                 break;
             case STR_TYPE:
-                printf("%s%s", list->c.car->s, " :string");
+                printf("%s: string\n", list->c.car->s);
                 break;
             case NULL_TYPE:
                 break;
@@ -148,20 +151,18 @@ void displayTokens(Value *list){
             case PTR_TYPE:
                 break;
             case OPEN_TYPE:
-                printf("%s%s", list->c.car->s, " :open");
+                printf("%s: open\n", list->c.car->s);
                 break;
             case CLOSE_TYPE:
-                printf("%s%s", list->c.car->s, " :close");
+                printf("%s: close\n", list->c.car->s);
                 break;
             case BOOL_TYPE:
-                printf("%i%s", list->c.car->i, " :boolean");
+                printf("%i: boolean\n", list->c.car->i);
                 break;
             case SYMBOL_TYPE:
-                printf("%s%s", list->c.car->s, " :symbol");
+                printf("%s: symbol\n", list->c.car->s);
                 break;
         }
         list = list -> c.cdr;
-        printf(")\n");
   }
-  printf(")\n");
 }
