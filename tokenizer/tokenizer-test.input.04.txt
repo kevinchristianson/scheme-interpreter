@@ -1,0 +1,3 @@
+((define tryAll ;; this is a comment
+	(lambda  ;;(x)
+		(x) ( + #t #f)))

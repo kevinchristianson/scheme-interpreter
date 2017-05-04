@@ -1,0 +1,5 @@
+(: open
++: symbol
+3: integer
+5: integer
+): close

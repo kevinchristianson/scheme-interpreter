@@ -1,0 +1,16 @@
+(: open
+(: open
+define: symbol
+tryAll: symbol
+(: open
+lambda: symbol
+(: open
+x: symbol
+): close
+(: open
++: symbol
+#t: boolean
+#f: boolean
+): close
+): close
+): close
