@@ -64,7 +64,7 @@ Value *tokenize(){
             }else{
                 temp[1] = 0;
                 printf("Syntax error: untokenizable\n");
-                texit();
+                texit(0);
             }
         } else if (strchr(symbolSet, charRead)){
             Value *val = talloc(sizeof(Value));
