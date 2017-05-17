@@ -1,0 +1,1 @@
+interpreter-test.input.05 and interpreter-test.input.06 are both of the new tests which include the quote case.

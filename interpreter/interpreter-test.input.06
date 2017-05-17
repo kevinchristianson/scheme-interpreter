@@ -1,0 +1,4 @@
+(let ((foo "hello")
+      (bar (quote CATS DOGS DINGOS))
+      (baz #f))
+  (if baz foo bar))

@@ -11,32 +11,35 @@
 void printer(Value *expr){
     switch (expr->type) {
         case INT_TYPE:
-            printf("%i\n", expr->i);
+            printf("%i", expr->i);
             break;
         case DOUBLE_TYPE:
-            printf("%f\n", expr->d);
+            printf("%f", expr->d);
             break;
         case STR_TYPE:
-            printf("%s\n", expr->s);
+            printf("%s", expr->s);
             break;
         case NULL_TYPE:
             break;
         case CONS_TYPE:
-            printer(car(expr));
+            printf("(");
+            printTree(expr);
+            printf(")");
             break;
         case PTR_TYPE:
             break;
         case BOOL_TYPE:
-            printf("%i\n", expr->i);
+            printf("%i", expr->i);
             break;
         case OPEN_TYPE:
             break;
         case CLOSE_TYPE:
             break;
         case SYMBOL_TYPE:
-            printf("%s\n", expr->s);
+            printf("%s", expr->s);
             break;
     }
+    printf("\n");
 }
 
 
@@ -94,6 +97,10 @@ Value *evalIf(Value *args, Frame *frame){
         return eval(car(cdr(args)), frame);
     }
     return eval(car(cdr(cdr(args))), frame);
+}
+
+Value *evalQuote(Value *args, Frame *frame){
+    return args;
 }
 
 //evaluates let statements and returns the proper values
@@ -186,6 +193,11 @@ Value *eval(Value *expr, Frame *frame){
 
             if (!strcmp(first->s,"let")){
                 result = evalLet(args, frame);
+                return result;
+            }
+            
+            if (!strcmp(first->s,"quote")){
+                result = evalQuote(args, frame);
                 return result;
             }
             else {
