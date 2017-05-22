@@ -38,6 +38,12 @@ void printer(Value *expr){
         case SYMBOL_TYPE:
             printf("%s", expr->s);
             break;
+        case VOID_TYPE:
+            break;
+        case CLOSURE_TYPE:
+            printf("ERROR: Should not have printed a closure type.\n");
+            printTree(expr);
+            break;
     }
     printf("\n");
 }
@@ -47,11 +53,11 @@ void printer(Value *expr){
 //creates an empty frame, calls eval on all tree branches
 void interpret(Value *tree){
     Value *current = tree;
-    Frame *frame = talloc(sizeof(Frame));
-    frame->parent = 0;
-    frame->bindings = makeNull();
+    Frame *topFrame = talloc(sizeof(Frame));
+    topFrame->parent = 0;
+    topFrame->bindings = makeNull();
     while(current->type != NULL_TYPE){
-        printer(eval(car(current), frame));
+        printer(eval(car(current), topFrame));
         current = cdr(current);
     }
 }
@@ -136,6 +142,22 @@ Value *evalLet(Value *args, Frame *frame){
 
 }
 
+Value *evalDefine(Value *expr, Frame *frame){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in define: expected 2 arguments\n");
+        texit(1);
+    }
+    while(frame->parent != 0){
+        frame = frame->parent;
+    }
+    frame->bindings = cons(car(cdr(expr)), frame->bindings);
+    frame->bindings = cons(car(expr), frame->bindings);
+    
+    Value *returnVal = makeNull();
+    returnVal->type = VOID_TYPE;
+    return returnVal;
+}
+
 
 // Evaluates an expression and returns the proper values
 Value *eval(Value *expr, Frame *frame){
@@ -175,6 +197,14 @@ Value *eval(Value *expr, Frame *frame){
         case BOOL_TYPE: {
             return expr;
         }
+        case VOID_TYPE: {
+            return makeNull();
+            break;
+        }
+        case CLOSURE_TYPE: {
+            return makeNull();
+            break;
+        }
         case CONS_TYPE: {
             
             Value *first = car(expr);
@@ -200,11 +230,30 @@ Value *eval(Value *expr, Frame *frame){
                 result = evalQuote(args, frame);
                 return result;
             }
+            
+            if (!strcmp(first->s,"define")){
+                result = evalDefine(args, frame);
+                return result;
+            }
+            
+            if (!strcmp(first->s,"lambda")){
+                result = evalQuote(args, frame);
+                return result;
+            }
+            /*
+            else {
+                // If not a special form, evaluate the first, evaluate the args, then
+                // apply the first to the args.
+                Value *evaledOperator = eval(first, frame);
+                Value *evaledArgs = evalEach(args, frame);
+                return apply(evaledOperator,evaledArgs);
+            } */
+            
             else {
                 // not a recognized special form
                 printf("ERROR: Not a recognized special form\n");
                 texit(1);
-            }
+            } 
             return result;
             break;
         }
