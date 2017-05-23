@@ -1,0 +1,5 @@
+(define testit
+  (lambda (bool x y)
+    (if bool x y)))
+    
+(testit "DOG" 3 4)

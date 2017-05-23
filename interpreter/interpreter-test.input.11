@@ -1,0 +1,5 @@
+(define curry
+(lambda (x)
+(lambda (y) (if #t x y))))
+
+((curry 3) 4)

@@ -1,0 +1,5 @@
+(define curry
+(lambda (x)
+(lambda (y) (quote (x y)))))
+
+((curry 3) 4)

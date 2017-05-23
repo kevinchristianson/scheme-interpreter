@@ -11,32 +11,36 @@
 void printer(Value *expr){
     switch (expr->type) {
         case INT_TYPE:
-            printf("%i", expr->i);
+            printf("%i\n", expr->i);
             break;
         case DOUBLE_TYPE:
-            printf("%f", expr->d);
+            printf("%f\n", expr->d);
             break;
         case STR_TYPE:
-            printf("%s", expr->s);
+            printf("%s\n", expr->s);
             break;
         case NULL_TYPE:
             break;
         case CONS_TYPE:
             printf("(");
             printTree(expr);
-            printf(")");
+            printf(")\n");
             break;
         case PTR_TYPE:
             break;
         case BOOL_TYPE:
-            printf("%i", expr->i);
+            if(expr->i){
+                printf("#t\n");
+            } else {
+                printf("#f\n");
+            }
             break;
         case OPEN_TYPE:
             break;
         case CLOSE_TYPE:
             break;
         case SYMBOL_TYPE:
-            printf("%s", expr->s);
+            printf("%s\n", expr->s);
             break;
         case VOID_TYPE:
             break;
@@ -45,10 +49,39 @@ void printer(Value *expr){
             printTree(expr);
             break;
     }
-    printf("\n");
 }
 
 
+Value *apply(Value *function, Value *args){
+    Frame *newFrame = talloc(sizeof(Frame));
+    newFrame->bindings = makeNull();
+    newFrame->parent = function->cl.frame;
+    Value *temp = function->cl.paramNames;
+    while(args->type != NULL_TYPE && temp->type != NULL_TYPE){
+        //printf("1\n");fflush(stdout);
+        newFrame->bindings = cons(car(args), newFrame->bindings);
+        //printf("2\n");fflush(stdout);
+        newFrame->bindings = cons(car(temp), newFrame->bindings);
+        //printf("3\n");fflush(stdout);
+        temp = cdr(temp);
+        args = cdr(args);
+    }
+    if(args->type != NULL_TYPE || temp->type != NULL_TYPE){
+        printf("ERROR: Function parameters and arguments not of equal length\n");
+        texit(1);
+    }
+    return eval(car(function->cl.functionCode), newFrame);
+}
+
+Value *evalEach(Value *args, Frame *frame){
+    Value *temp = makeNull();
+    while(args->type != NULL_TYPE){
+        temp = cons(eval(car(args), frame), temp);
+        args = cdr(args);
+    }
+    
+    return reverse(temp);
+}
 
 //creates an empty frame, calls eval on all tree branches
 void interpret(Value *tree){
@@ -67,15 +100,15 @@ void interpret(Value *tree){
 //returns a value for a given variable
 Value *lookUpSymbol(Value *expr, Frame *frame){
     Value *current = frame->bindings;
-    if(frame->parent == 0){
-        printf("Error: Symbol is not defined\n");
-        texit(1);
-    }
     while(current->type != NULL_TYPE){
         if (!strcmp(car(current)->s,expr->s)) {
             return car(cdr(current));
         }
         current = cdr(cdr(current));
+    }
+    if(frame->parent == 0){
+        printf("Error: is not defined\n");
+        texit(1);
     }
     return lookUpSymbol(expr, frame->parent);
 }
@@ -99,6 +132,10 @@ Value *evalIf(Value *args, Frame *frame){
     }
     
     //if there are enough arguements, do if statement
+    if(eval(car(args), frame)->type != BOOL_TYPE){
+        printf("ERROR: Expected boolean, received something else\n");
+        texit(1);
+    }
     if(eval(car(args), frame)->i == 1){
         return eval(car(cdr(args)), frame);
     }
@@ -143,21 +180,31 @@ Value *evalLet(Value *args, Frame *frame){
 }
 
 Value *evalDefine(Value *expr, Frame *frame){
+    Frame *tempFrame = frame;
     if(checkParamNumber(expr) != 2){
         printf("ERROR in define: expected 2 arguments\n");
         texit(1);
     }
-    while(frame->parent != 0){
-        frame = frame->parent;
+    while(tempFrame->parent != 0){
+        tempFrame = tempFrame->parent;
     }
-    frame->bindings = cons(car(cdr(expr)), frame->bindings);
-    frame->bindings = cons(car(expr), frame->bindings);
+    tempFrame->bindings = cons(eval(car(cdr(expr)), frame), tempFrame->bindings);
+    tempFrame->bindings = cons(car(expr), tempFrame->bindings);
     
     Value *returnVal = makeNull();
     returnVal->type = VOID_TYPE;
     return returnVal;
 }
 
+Value *evalLambda(Value *expr, Frame *frame){
+    Value *closure = talloc(sizeof(Value));
+    closure->type = CLOSURE_TYPE;
+    closure->cl.frame = frame;
+    closure->cl.paramNames = car(expr);
+    //printf("5\n");fflush(stdout);
+    closure->cl.functionCode = cdr(expr);
+    return closure;
+}
 
 // Evaluates an expression and returns the proper values
 Value *eval(Value *expr, Frame *frame){
@@ -211,11 +258,6 @@ Value *eval(Value *expr, Frame *frame){
             Value *args = cdr(expr);
             Value *result;
             
-            if(first->type != SYMBOL_TYPE){
-                printf("ERROR: Attempting to evaluate a non-string as a special form!\n");
-                texit(1);
-            }
-            
             if (!strcmp(first->s,"if")) {
                 result = evalIf(args, frame);
                 return result;
@@ -235,27 +277,27 @@ Value *eval(Value *expr, Frame *frame){
                 result = evalDefine(args, frame);
                 return result;
             }
-            
             if (!strcmp(first->s,"lambda")){
-                result = evalQuote(args, frame);
+                result = evalLambda(args, frame);
                 return result;
             }
-            /*
+            
+            if(first->type != SYMBOL_TYPE && first->type != CONS_TYPE){
+                printf("ERROR: Attempting to evaluate a non-string as a special form!\n");
+                texit(1);
+            }
+
             else {
                 // If not a special form, evaluate the first, evaluate the args, then
                 // apply the first to the args.
                 Value *evaledOperator = eval(first, frame);
                 Value *evaledArgs = evalEach(args, frame);
-                return apply(evaledOperator,evaledArgs);
-            } */
-            
-            else {
-                // not a recognized special form
-                printf("ERROR: Not a recognized special form\n");
-                texit(1);
-            } 
+                return apply(evaledOperator,evaledArgs); 
+            }
             return result;
             break;
         }
     }
 }
+
+
