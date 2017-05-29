@@ -8,39 +8,50 @@
 
 //helper function
 //prints first item in value list
-void printer(Value *expr){
+bool printer(Value *expr){
     switch (expr->type) {
         case INT_TYPE:
-            printf("%i\n", expr->i);
+            printf("%i", expr->i);
+            return true;
             break;
         case DOUBLE_TYPE:
-            printf("%f\n", expr->d);
+            printf("%f", expr->d);
+            return true;
             break;
         case STR_TYPE:
-            printf("%s\n", expr->s);
+            printf("%s", expr->s);
+            return true;
             break;
         case NULL_TYPE:
             break;
         case CONS_TYPE:
             printf("(");
-            printTree(expr);
-            printf(")\n");
+            while(cdr(expr)->type != NULL_TYPE){
+                printer(car(expr));
+                printf(" ");
+                expr = cdr(expr);
+            }
+            printer(car(expr));
+            printf(")");
+            return true;
             break;
         case PTR_TYPE:
             break;
         case BOOL_TYPE:
             if(expr->i){
-                printf("#t\n");
+                printf("#t");
             } else {
-                printf("#f\n");
+                printf("#f");
             }
+            return true;
             break;
         case OPEN_TYPE:
             break;
         case CLOSE_TYPE:
             break;
         case SYMBOL_TYPE:
-            printf("%s\n", expr->s);
+            printf("%s", expr->s);
+            return true;
             break;
         case VOID_TYPE:
             break;
@@ -51,6 +62,7 @@ void printer(Value *expr){
         case PRIMITIVE_TYPE:
             break;
     }
+    return false;
 }
 
 // returns the number of tokens in an expression
@@ -103,12 +115,14 @@ Value *evalEach(Value *args, Frame *frame){
 //built in addition function for scheme
 Value *evalPlus(Value *expr){
     double sum = 0.0;
+    bool hasDouble = false;
     while(expr->type != NULL_TYPE){
         if (car(expr)->type == INT_TYPE){
             sum += car(expr)->i;
         }
         else if (car(expr)->type == DOUBLE_TYPE){
             sum += car(expr)->d;
+            hasDouble = true;
         }
         else {
             printf("%i\n", expr->type);
@@ -118,8 +132,13 @@ Value *evalPlus(Value *expr){
         expr = cdr(expr);
     }
     Value *shell = talloc(sizeof(Value));
-    shell->type = DOUBLE_TYPE;
-    shell->d = sum;
+    if(hasDouble){
+        shell->type = DOUBLE_TYPE;
+        shell->d = sum; 
+    }else{
+        shell->type = INT_TYPE;
+        shell->i = sum;
+    }
     return shell;
 }
 
@@ -131,7 +150,7 @@ Value *evalNull(Value *expr){
     }
     Value *result = talloc(sizeof(Value));
     result->type = BOOL_TYPE;
-    if(expr->type == NULL_TYPE){
+    if(car(expr)->type == NULL_TYPE){
         result->i = 1;
     }else{
         result->i = 0;
@@ -141,44 +160,39 @@ Value *evalNull(Value *expr){
 
 //built in car function in scheme
 Value *evalCar(Value *expr){
-    /*if(checkParamNumber(expr) != 1){
-        printf("ERROR in CAR statement: expected 1 parameter, got %i\n", checkParamNumber(args));
+    if(checkParamNumber(expr) != 1){
+        printf("ERROR in CAR statement: expected 1 parameter, got %i\n", checkParamNumber(expr));
         texit(1);
-    }*/
-    if(expr->type != CONS_TYPE){
+    }
+    if(car(expr)->type != CONS_TYPE){
         printf("ERROR in CAR statement: expected list\n");
         texit(1);
     }
-    return car(expr);
+    return car(car(expr));
 }
 
 //built in cdr function in scheme
 Value *evalCdr(Value *expr){
-    /*if(checkParamNumber(expr) != 1){
-        printf("ERROR in CDR statement: expected 1 parameter, got %i\n", checkParamNumber(args));
+    if(checkParamNumber(expr) != 1){
+        printf("ERROR in CDR statement: expected 1 parameter, got %i\n", checkParamNumber(expr));
         texit(1);
-    }*/
-    if(expr->type != CONS_TYPE){
+    }
+    if(car(expr)->type != CONS_TYPE){
         printf("ERROR in CDR statement: expected list\n");
         texit(1);
     }
-    return cdr(expr);
+    return cdr(car(expr));
 }
 
 //built in cons function in scheme
 Value *evalCons(Value *expr){
+    printf("CONS expr: ");
+    printer(expr);
     if(checkParamNumber(expr) != 2){
         printf("ERROR in CONS statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
         texit(1);
     }
-    if(car(expr)->type != CONS_TYPE && car(expr)->type != NULL_TYPE){
-        printf("ERROR in CONS statement: expected list\n");
-        texit(1);
-    }
-    if(cdr(expr)->type != CONS_TYPE && cdr(expr)->type != NULL_TYPE){
-        printf("ERROR in CONS statement: expected list\n");
-        texit(1);
-    }
+    printer(cons(car(expr), cdr(expr)));
     return cons(car(expr), cdr(expr));
 }
 
@@ -207,7 +221,9 @@ void interpret(Value *tree){
     bind("cdr", &evalCdr, topFrame);
     bind("cons", &evalCons, topFrame);
     while(current->type != NULL_TYPE){
-        printer(eval(car(current), topFrame));
+        if(printer(eval(car(current), topFrame))){
+            printf("\n");
+        }
         current = cdr(current);
     }
 }
