@@ -48,29 +48,35 @@ void printer(Value *expr){
             printf("ERROR: Should not have printed a closure type.\n");
             printTree(expr);
             break;
+        case PRIMITIVE_TYPE:
+            break;
     }
 }
 
 
-Value *apply(Value *function, Value *args){
+
+Value *apply(Value *function, Value *args, Frame *frame){
     Frame *newFrame = talloc(sizeof(Frame));
     newFrame->bindings = makeNull();
-    newFrame->parent = function->cl.frame;
-    Value *temp = function->cl.paramNames;
-    while(args->type != NULL_TYPE && temp->type != NULL_TYPE){
-        //printf("1\n");fflush(stdout);
-        newFrame->bindings = cons(car(args), newFrame->bindings);
-        //printf("2\n");fflush(stdout);
-        newFrame->bindings = cons(car(temp), newFrame->bindings);
-        //printf("3\n");fflush(stdout);
-        temp = cdr(temp);
-        args = cdr(args);
+    if(function->type == CLOSURE_TYPE){
+        newFrame->parent = function->cl.frame;
+
+        Value *temp = function->cl.paramNames;
+        while(args->type != NULL_TYPE && temp->type != NULL_TYPE){
+            newFrame->bindings = cons(car(args), newFrame->bindings);
+            newFrame->bindings = cons(car(temp), newFrame->bindings);
+            temp = cdr(temp);
+            args = cdr(args);
+        }
+        if(args->type != NULL_TYPE || temp->type != NULL_TYPE){
+            printf("ERROR: Function parameters and arguments not of equal length\n");
+            texit(1);
+        }
+        return eval(car(function->cl.functionCode), newFrame);
+    }else{
+        return eval(function->pf(args), frame);
     }
-    if(args->type != NULL_TYPE || temp->type != NULL_TYPE){
-        printf("ERROR: Function parameters and arguments not of equal length\n");
-        texit(1);
-    }
-    return eval(car(function->cl.functionCode), newFrame);
+    
 }
 
 Value *evalEach(Value *args, Frame *frame){
@@ -83,12 +89,48 @@ Value *evalEach(Value *args, Frame *frame){
     return reverse(temp);
 }
 
+Value *evalPlus(Value *expr){
+    double sum = 0.0;
+    while(expr->type != NULL_TYPE){
+        if (car(expr)->type == INT_TYPE){
+            sum += car(expr)->i;
+        }
+        else if (car(expr)->type == DOUBLE_TYPE){
+            sum += car(expr)->d;
+        }
+        else {
+            printf("%i\n", expr->type);
+            printf("ERROR: Non-real number parameter.\n");
+            texit(1);
+        }
+        expr = cdr(expr);
+    }
+    Value *shell = talloc(sizeof(Value));
+    shell->type = DOUBLE_TYPE;
+    shell->d = sum;
+    return shell;
+}
+
+void bind(char *name, Value *(*function)(struct Value *), Frame *frame) {
+    // Add primitive functions to top-level bindings list
+    Value *value = talloc(sizeof(Value));
+    value->type = PRIMITIVE_TYPE;
+    value->pf = function;
+    frame->bindings = cons(value, frame->bindings);
+    Value *funName = talloc(sizeof(Value));
+    funName->type = SYMBOL_TYPE;
+    funName->s = name;
+    frame->bindings = cons(funName, frame->bindings);
+}
+
 //creates an empty frame, calls eval on all tree branches
 void interpret(Value *tree){
     Value *current = tree;
     Frame *topFrame = talloc(sizeof(Frame));
     topFrame->parent = 0;
     topFrame->bindings = makeNull();
+    bind("+", &evalPlus, topFrame);
+    
     while(current->type != NULL_TYPE){
         printer(eval(car(current), topFrame));
         current = cdr(current);
@@ -201,7 +243,6 @@ Value *evalLambda(Value *expr, Frame *frame){
     closure->type = CLOSURE_TYPE;
     closure->cl.frame = frame;
     closure->cl.paramNames = car(expr);
-    //printf("5\n");fflush(stdout);
     closure->cl.functionCode = cdr(expr);
     return closure;
 }
@@ -252,6 +293,10 @@ Value *eval(Value *expr, Frame *frame){
             return makeNull();
             break;
         }
+        case PRIMITIVE_TYPE: {
+            return makeNull();
+            break;
+        }
         case CONS_TYPE: {
             
             Value *first = car(expr);
@@ -277,6 +322,7 @@ Value *eval(Value *expr, Frame *frame){
                 result = evalDefine(args, frame);
                 return result;
             }
+            
             if (!strcmp(first->s,"lambda")){
                 result = evalLambda(args, frame);
                 return result;
@@ -292,7 +338,7 @@ Value *eval(Value *expr, Frame *frame){
                 // apply the first to the args.
                 Value *evaledOperator = eval(first, frame);
                 Value *evaledArgs = evalEach(args, frame);
-                return apply(evaledOperator,evaledArgs); 
+                return apply(evaledOperator,evaledArgs, frame); 
             }
             return result;
             break;
