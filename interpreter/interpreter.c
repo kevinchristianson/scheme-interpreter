@@ -150,6 +150,7 @@ Value *evalNull(Value *expr){
     }
     Value *result = talloc(sizeof(Value));
     result->type = BOOL_TYPE;
+    if(car(expr)->type == NULL_TYPE){
         result->i = 1;
     }else{
         result->i = 0;
