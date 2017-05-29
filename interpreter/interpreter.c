@@ -89,6 +89,7 @@ Value *apply(Value *function, Value *args, Frame *frame){
 
 }
 
+//evals every value in args and saves in new list which is then returned
 Value *evalEach(Value *args, Frame *frame){
     Value *temp = makeNull();
     while(args->type != NULL_TYPE){
@@ -222,7 +223,7 @@ Value *lookUpSymbol(Value *expr, Frame *frame){
         current = cdr(cdr(current));
     }
     if(frame->parent == 0){
-        printf("Error: is not defined\n");
+        printf("Error: %s is not defined\n", expr->s);
         texit(1);
     }
     return lookUpSymbol(expr, frame->parent);
