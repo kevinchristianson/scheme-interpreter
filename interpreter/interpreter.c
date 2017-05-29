@@ -34,7 +34,7 @@ bool printer(Value *expr){
             if(cdr(expr)->type == NULL_TYPE){
                 printer(car(expr));
             }else{
-                prinf(". ");
+                printf(". ");
                 printer(car(expr));
             }
             printf(")");
