@@ -26,12 +26,17 @@ bool printer(Value *expr){
             break;
         case CONS_TYPE:
             printf("(");
-            while(cdr(expr)->type != NULL_TYPE){
+            while(cdr(expr) && cdr(expr)->type != NULL_TYPE){
                 printer(car(expr));
                 printf(" ");
                 expr = cdr(expr);
             }
-            printer(car(expr));
+            if(cdr(expr)->type == NULL_TYPE){
+                printer(car(expr));
+            }else{
+                prinf(". ");
+                printer(car(expr));
+            }
             printf(")");
             return true;
             break;
@@ -192,7 +197,6 @@ Value *evalCons(Value *expr){
         printf("ERROR in CONS statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
         texit(1);
     }
-    printer(cons(car(expr), cdr(expr)));
     return cons(car(expr), cdr(expr));
 }
 
