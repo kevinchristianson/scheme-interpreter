@@ -134,7 +134,7 @@ Value *evalPlus(Value *expr){
     Value *shell = talloc(sizeof(Value));
     if(hasDouble){
         shell->type = DOUBLE_TYPE;
-        shell->d = sum; 
+        shell->d = sum;
     }else{
         shell->type = INT_TYPE;
         shell->i = sum;
@@ -150,7 +150,6 @@ Value *evalNull(Value *expr){
     }
     Value *result = talloc(sizeof(Value));
     result->type = BOOL_TYPE;
-    if(car(expr)->type == NULL_TYPE){
         result->i = 1;
     }else{
         result->i = 0;
