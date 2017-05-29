@@ -53,8 +53,18 @@ void printer(Value *expr){
     }
 }
 
+// returns the number of tokens in an expression
+int checkParamNumber(Value *expr){
+    Value * current = expr;
+    int total_args = 0;
+    while(current->type != NULL_TYPE){
+        current = cdr(current);
+        total_args += 1;
+    }
+    return total_args;
+}
 
-
+//looks up a function binding and then calls eval on it using passed in args
 Value *apply(Value *function, Value *args, Frame *frame){
     Frame *newFrame = talloc(sizeof(Frame));
     newFrame->bindings = makeNull();
@@ -76,7 +86,7 @@ Value *apply(Value *function, Value *args, Frame *frame){
     }else{
         return eval(function->pf(args), frame);
     }
-    
+
 }
 
 Value *evalEach(Value *args, Frame *frame){
@@ -85,10 +95,11 @@ Value *evalEach(Value *args, Frame *frame){
         temp = cons(eval(car(args), frame), temp);
         args = cdr(args);
     }
-    
+
     return reverse(temp);
 }
 
+//built in addition function for scheme
 Value *evalPlus(Value *expr){
     double sum = 0.0;
     while(expr->type != NULL_TYPE){
@@ -111,6 +122,66 @@ Value *evalPlus(Value *expr){
     return shell;
 }
 
+// built in null? function in scheme
+Value *evalNull(Value *expr){
+    if(checkParamNumber(expr) != 1){
+        printf("ERROR in NULL? statement: expected 1 parameter, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    Value *result = talloc(sizeof(Value));
+    result->type = BOOL_TYPE;
+    if(expr->type == NULL_TYPE){
+        result->i = 1;
+    }else{
+        result->i = 0;
+    }
+    return result;
+}
+
+//built in car function in scheme
+Value *evalCar(Value *expr){
+    /*if(checkParamNumber(expr) != 1){
+        printf("ERROR in CAR statement: expected 1 parameter, got %i\n", checkParamNumber(args));
+        texit(1);
+    }*/
+    if(expr->type != CONS_TYPE){
+        printf("ERROR in CAR statement: expected list\n");
+        texit(1);
+    }
+    return car(expr);
+}
+
+//built in cdr function in scheme
+Value *evalCdr(Value *expr){
+    /*if(checkParamNumber(expr) != 1){
+        printf("ERROR in CDR statement: expected 1 parameter, got %i\n", checkParamNumber(args));
+        texit(1);
+    }*/
+    if(expr->type != CONS_TYPE){
+        printf("ERROR in CDR statement: expected list\n");
+        texit(1);
+    }
+    return cdr(expr);
+}
+
+//built in cons function in scheme
+Value *evalCons(Value *expr){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in CONS statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    if(car(expr)->type != CONS_TYPE && car(expr)->type != NULL_TYPE){
+        printf("ERROR in CONS statement: expected list\n");
+        texit(1);
+    }
+    if(cdr(expr)->type != CONS_TYPE && cdr(expr)->type != NULL_TYPE){
+        printf("ERROR in CONS statement: expected list\n");
+        texit(1);
+    }
+    return cons(car(expr), cdr(expr));
+}
+
+//takes a function pointer and name as well as a frame and creates a definition for that function in the frame
 void bind(char *name, Value *(*function)(struct Value *), Frame *frame) {
     // Add primitive functions to top-level bindings list
     Value *value = talloc(sizeof(Value));
@@ -123,20 +194,22 @@ void bind(char *name, Value *(*function)(struct Value *), Frame *frame) {
     frame->bindings = cons(funName, frame->bindings);
 }
 
-//creates an empty frame, calls eval on all tree branches
+//creates an empty frame, binds built-in functions, calls eval on all tree branches
 void interpret(Value *tree){
     Value *current = tree;
     Frame *topFrame = talloc(sizeof(Frame));
     topFrame->parent = 0;
     topFrame->bindings = makeNull();
     bind("+", &evalPlus, topFrame);
-    
+    bind("null?", &evalNull, topFrame);
+    bind("car", &evalCar, topFrame);
+    bind("cdr", &evalCdr, topFrame);
+    bind("cons", &evalCons, topFrame);
     while(current->type != NULL_TYPE){
         printer(eval(car(current), topFrame));
         current = cdr(current);
     }
 }
-
 
 //helper function
 //returns a value for a given variable
@@ -155,24 +228,13 @@ Value *lookUpSymbol(Value *expr, Frame *frame){
     return lookUpSymbol(expr, frame->parent);
 }
 
-// returns the number of tokens .in an expression
-int checkParamNumber(Value *expr){
-    Value * current = expr;
-    int total_args = 0;
-    while(current->type != NULL_TYPE){
-        current = cdr(current);
-        total_args += 1;
-    }
-    return total_args;
-}
-
 //evaluates if statements and returns the proper values
 Value *evalIf(Value *args, Frame *frame){
     if(checkParamNumber(args) != 3){
         printf("ERROR in IF statement: expected 3 parameters, got %i\n", checkParamNumber(args));
         texit(1);
     }
-    
+
     //if there are enough arguements, do if statement
     if(eval(car(args), frame)->type != BOOL_TYPE){
         printf("ERROR: Expected boolean, received something else\n");
@@ -190,18 +252,18 @@ Value *evalQuote(Value *args, Frame *frame){
 
 //evaluates let statements and returns the proper values
 Value *evalLet(Value *args, Frame *frame){
-    
+
     if(checkParamNumber(args) < 2){
         printf("ERROR in LET statement: expected 2 parameters, got %i\n", checkParamNumber(args));
         texit(1);
     }
-    
+
     Frame *new = talloc(sizeof(Frame));
     new->bindings = makeNull();
     new->parent = frame;
     //assigns is the sub-tree containing all variable declarations
     Value *value_list = car(args);
-    
+
     while(value_list -> type != NULL_TYPE){
         Value *pair = car(value_list);
         if(checkParamNumber(pair) != 2){
@@ -212,11 +274,11 @@ Value *evalLet(Value *args, Frame *frame){
         new->bindings = cons(car(pair), new->bindings);
         value_list = cdr(value_list);
     }
-    
+
     while (cdr(args)->type !=NULL_TYPE){
         args = cdr(args);
     }
-    
+
     return eval(car(args), new);
 
 }
@@ -232,7 +294,7 @@ Value *evalDefine(Value *expr, Frame *frame){
     }
     tempFrame->bindings = cons(eval(car(cdr(expr)), frame), tempFrame->bindings);
     tempFrame->bindings = cons(car(expr), tempFrame->bindings);
-    
+
     Value *returnVal = makeNull();
     returnVal->type = VOID_TYPE;
     return returnVal;
@@ -298,11 +360,11 @@ Value *eval(Value *expr, Frame *frame){
             break;
         }
         case CONS_TYPE: {
-            
+
             Value *first = car(expr);
             Value *args = cdr(expr);
             Value *result;
-            
+
             if (!strcmp(first->s,"if")) {
                 result = evalIf(args, frame);
                 return result;
@@ -312,22 +374,22 @@ Value *eval(Value *expr, Frame *frame){
                 result = evalLet(args, frame);
                 return result;
             }
-            
+
             if (!strcmp(first->s,"quote")){
                 result = evalQuote(args, frame);
                 return result;
             }
-            
+
             if (!strcmp(first->s,"define")){
                 result = evalDefine(args, frame);
                 return result;
             }
-            
+
             if (!strcmp(first->s,"lambda")){
                 result = evalLambda(args, frame);
                 return result;
             }
-            
+
             if(first->type != SYMBOL_TYPE && first->type != CONS_TYPE){
                 printf("ERROR: Attempting to evaluate a non-string as a special form!\n");
                 texit(1);
@@ -338,12 +400,10 @@ Value *eval(Value *expr, Frame *frame){
                 // apply the first to the args.
                 Value *evaledOperator = eval(first, frame);
                 Value *evaledArgs = evalEach(args, frame);
-                return apply(evaledOperator,evaledArgs, frame); 
+                return apply(evaledOperator,evaledArgs, frame);
             }
             return result;
             break;
         }
     }
 }
-
-
