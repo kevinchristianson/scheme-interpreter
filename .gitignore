@@ -7,3 +7,5 @@ linkedlist/linkedlist.dSYM/Contents/Resources/DWARF/linkedlist
 
 *.o
 tokenizer/tokenizer
+
+interpreter/interpreter
