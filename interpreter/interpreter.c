@@ -101,7 +101,7 @@ Value *apply(Value *function, Value *args, Frame *frame){
         }
         return eval(car(function->cl.functionCode), newFrame);
     }else{
-        return eval(function->pf(args), frame);
+        return function->pf(args);
     }
 
 }
@@ -191,8 +191,6 @@ Value *evalCdr(Value *expr){
 
 //built in cons function in scheme
 Value *evalCons(Value *expr){
-    printf("CONS expr: ");
-    printer(expr);
     if(checkParamNumber(expr) != 2){
         printf("ERROR in CONS statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
         texit(1);
@@ -385,7 +383,6 @@ Value *eval(Value *expr, Frame *frame){
             Value *first = car(expr);
             Value *args = cdr(expr);
             Value *result;
-
             if (!strcmp(first->s,"if")) {
                 result = evalIf(args, frame);
                 return result;
@@ -414,9 +411,7 @@ Value *eval(Value *expr, Frame *frame){
             if(first->type != SYMBOL_TYPE && first->type != CONS_TYPE){
                 printf("ERROR: Attempting to evaluate a non-string as a special form!\n");
                 texit(1);
-            }
-
-            else {
+            }else {
                 // If not a special form, evaluate the first, evaluate the args, then
                 // apply the first to the args.
                 Value *evaledOperator = eval(first, frame);
