@@ -84,9 +84,7 @@ int checkParamNumber(Value *expr){
 Value *apply(Value *function, Value *args, Frame *frame){
     Frame *newFrame = talloc(sizeof(Frame));
     newFrame->bindings = makeNull();
-    if(function->type == PRIMITIVE_TYPE){
-        return function->pf(args);
-    } else if (function->type == CLOSURE_TYPE){
+    if(function->type == CLOSURE_TYPE){
         newFrame->parent = function->cl.frame;
 
         Value *temp = function->cl.paramNames;
@@ -101,10 +99,10 @@ Value *apply(Value *function, Value *args, Frame *frame){
             texit(1);
         }
         return eval(car(function->cl.functionCode), newFrame);
-    } 
-    printf("ERROR: Not a recognized function\n");
-    texit(1);
-    return makeNull();
+    }else{
+        return function->pf(args);
+    }
+
 }
 
 //evals every value in args and saves in new list which is then returned
@@ -187,6 +185,8 @@ Value *evalCdr(Value *expr){
         printf("ERROR in CDR statement: expected list\n");
         texit(1);
     }
+    printf("%i\n",car(expr)->type);
+    fflush(stdout);
     return cdr(car(expr));
 }
 
@@ -417,7 +417,12 @@ Value *eval(Value *expr, Frame *frame){
                 // apply the first to the args.
                 Value *evaledOperator = eval(first, frame);
                 Value *evaledArgs = evalEach(args, frame);
-                return apply(evaledOperator,evaledArgs, frame);
+                Value *applyResults = apply(evaledOperator,evaledArgs, frame);
+                /* if (applyResults->type == NULL_TYPE){
+                    printf("ERROR: Not a recognized function or special form \n");
+                    texit(1);
+                } */
+                return applyResults;
             }
             return result;
             break;
