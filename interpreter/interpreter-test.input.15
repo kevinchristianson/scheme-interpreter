@@ -1,0 +1,3 @@
+(null? (quote()))
+(null? (quote (ABC EFG)))
+(null? (quote(quote(ABC))))

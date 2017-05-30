@@ -25,7 +25,6 @@ bool printer(Value *expr){
         case NULL_TYPE:
             break;
         case CONS_TYPE:
-            printf("(");
             while(cdr(expr) && cdr(expr)->type != NULL_TYPE){
                 printer(car(expr));
                 printf(" ");
@@ -34,10 +33,9 @@ bool printer(Value *expr){
             if(cdr(expr)->type == NULL_TYPE){
                 printer(car(expr));
             }else{
-                printf(". ");
+                printf(" . ");
                 printer(car(expr));
             }
-            printf(")");
             return true;
             break;
         case PTR_TYPE:
@@ -67,6 +65,7 @@ bool printer(Value *expr){
         case PRIMITIVE_TYPE:
             break;
     }
+    printf("\n");
     return false;
 }
 
@@ -85,7 +84,9 @@ int checkParamNumber(Value *expr){
 Value *apply(Value *function, Value *args, Frame *frame){
     Frame *newFrame = talloc(sizeof(Frame));
     newFrame->bindings = makeNull();
-    if(function->type == CLOSURE_TYPE){
+    if(function->type == PRIMITIVE_TYPE){
+        return function->pf(args);
+    } else if (function->type == CLOSURE_TYPE){
         newFrame->parent = function->cl.frame;
 
         Value *temp = function->cl.paramNames;
@@ -100,10 +101,10 @@ Value *apply(Value *function, Value *args, Frame *frame){
             texit(1);
         }
         return eval(car(function->cl.functionCode), newFrame);
-    }else{
-        return function->pf(args);
-    }
-
+    } 
+    printf("ERROR: Not a recognized function\n");
+    texit(1);
+    return makeNull();
 }
 
 //evals every value in args and saves in new list which is then returned
@@ -155,7 +156,7 @@ Value *evalNull(Value *expr){
     }
     Value *result = talloc(sizeof(Value));
     result->type = BOOL_TYPE;
-    if(car(expr)->type == NULL_TYPE){
+    if(car(car(expr))->type == NULL_TYPE){
         result->i = 1;
     }else{
         result->i = 0;
@@ -173,7 +174,7 @@ Value *evalCar(Value *expr){
         printf("ERROR in CAR statement: expected list\n");
         texit(1);
     }
-    return car(car(expr));
+    return car(car(car(expr)));
 }
 
 //built in cdr function in scheme
