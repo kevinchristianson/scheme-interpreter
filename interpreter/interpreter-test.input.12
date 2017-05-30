@@ -1,8 +1,1 @@
 (+ 3 5)
-(null? (quote ))
-(define x (quote 1 2 3))
-x
-(car x)
-(cdr x)
-;;(cdr (cdr x))
-;;(cons 1 1)
