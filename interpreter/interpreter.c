@@ -25,6 +25,7 @@ bool printer(Value *expr){
         case NULL_TYPE:
             break;
         case CONS_TYPE:
+            printf("(");
             while(cdr(expr) && cdr(expr)->type != NULL_TYPE){
                 printer(car(expr));
                 printf(" ");
@@ -36,6 +37,7 @@ bool printer(Value *expr){
                 printf(" . ");
                 printer(car(expr));
             }
+            printf(")");
             return true;
             break;
         case PTR_TYPE:
@@ -65,7 +67,6 @@ bool printer(Value *expr){
         case PRIMITIVE_TYPE:
             break;
     }
-    printf("\n");
     return false;
 }
 
@@ -185,9 +186,11 @@ Value *evalCdr(Value *expr){
         printf("ERROR in CDR statement: expected list\n");
         texit(1);
     }
-    printf("%i\n",car(expr)->type);
-    fflush(stdout);
-    return cdr(car(expr));
+    if(cdr(expr)->type != CONS_TYPE){
+        return car(cdr(car(expr)));
+    } else {
+        return cdr(car(car(expr)));
+    }
 }
 
 //built in cons function in scheme
@@ -196,7 +199,11 @@ Value *evalCons(Value *expr){
         printf("ERROR in CONS statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
         texit(1);
     }
-    return cons(car(expr), cdr(expr));
+    if(car(car(cdr(expr)))->type == CONS_TYPE){
+        return cons(car(car(expr)), car(car(cdr(expr))));
+    } else {
+        return cons(car(car(expr)), car(cdr(expr)));
+    }
 }
 
 //takes a function pointer and name as well as a frame and creates a definition for that function in the frame
