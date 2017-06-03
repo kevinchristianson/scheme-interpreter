@@ -167,13 +167,13 @@ Value *apply(Value *function, Value *args, Frame *frame){
 
 //evals every value in args and saves in new list which is then returned
 Value *evalEach(Value *args, Frame *frame){
+    printer(args);
+    printf("\n");
     Value *temp = makeNull();
     while(args->type != NULL_TYPE){
         temp = cons(eval(car(args), frame), temp);
         args = cdr(args);
     }
-   // printer(reverse(temp));
-//    printf("\n");
     return reverse(temp);
 }
 
@@ -640,7 +640,7 @@ Value *evalDefine(Value *expr, Frame *frame){
 
 Value *evalSet(Value *expr, Frame *frame){
     if(checkParamNumber(expr) != 2){
-        printf("ERROR in define: expected 2 arguments\n");
+        printf("ERROR in set!: expected 2 arguments\n");
         texit(1);
     }
     Value *temp = lookUpSymbol(car(expr), frame);
@@ -801,6 +801,14 @@ Value *eval(Value *expr, Frame *frame){
             if (!strcmp(first->s,"let*")){
                 result = evalLetStar(args, frame);
                 return result;
+            }
+            
+            if (!strcmp(first->s,"begin")){
+                result = evalEach(args, frame);
+                while(cdr(result)->type != NULL_TYPE){
+                    result = cdr(result);
+                }
+                return car(result);
             }
 
             if(first->type != SYMBOL_TYPE && first->type != CONS_TYPE){
