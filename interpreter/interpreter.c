@@ -587,17 +587,15 @@ Value *evalIf(Value *args, Frame *frame){
 }
 
 Value *evalQuote(Value *args, Frame *frame){
-    return car(args);
+    return args;
 }
 
 //evaluates let statements and returns the proper values
 Value *evalLet(Value *args, Frame *frame){
-
     if(checkParamNumber(args) < 2){
         printf("ERROR in LET statement: expected 2 parameters, got %i\n", checkParamNumber(args));
         texit(1);
     }
-
     Frame *new = talloc(sizeof(Frame));
     new->bindings = makeNull();
     new->parent = frame;
@@ -638,6 +636,73 @@ Value *evalDefine(Value *expr, Frame *frame){
     Value *returnVal = makeNull();
     returnVal->type = VOID_TYPE;
     return returnVal;
+}
+
+Value *evalSet(Value *expr, Frame *frame){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in define: expected 2 arguments\n");
+        texit(1);
+    }
+    Value *temp = lookUpSymbol(car(expr), frame);
+    expr = eval(car(cdr(expr)), frame);
+    temp->type = expr->type;
+    if(temp->type == INT_TYPE){
+        temp->i = expr->i;
+    }
+    else if(temp->type == SYMBOL_TYPE){
+         temp->s = expr->s;
+    }
+    else if(temp->type == BOOL_TYPE){
+         temp->i = expr->i;
+    }
+    else if(temp->type == DOUBLE_TYPE){
+         temp->d = expr->d;
+    }
+    else if(temp->type == STR_TYPE){
+         temp->s = expr->s;
+    }
+    else if(temp->type == CONS_TYPE){
+         temp->c.car = expr->c.car;
+        temp->c.cdr = expr->c.cdr;
+    }
+    else{
+        printf("ERROR: Invalid type for set!.");
+        texit(1);
+    }
+    
+
+    Value *returnVal = makeNull();
+    returnVal->type = VOID_TYPE;
+    return returnVal;
+}
+
+Frame *letStarHelper(Value *pair, Frame *frame){
+    if(checkParamNumber(pair) != 2){
+        printf("ERROR in LET* assignment statement: expected 2 parameters, got %i\n", checkParamNumber(pair));
+        texit(1);
+    }
+    Frame *new = talloc(sizeof(Frame));
+    new->bindings = makeNull();
+    new->parent = frame;
+    new->bindings = cons(eval(car(cdr(pair)), frame), new->bindings);
+    new->bindings = cons(car(pair), new->bindings);
+    return new;
+}
+
+Value *evalLetStar(Value *expr, Frame *frame){
+    if(checkParamNumber(expr) < 2){
+        printf("ERROR in LET* statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    Value *current = car(expr);
+    while(current->type != NULL_TYPE){
+        frame = letStarHelper(car(current), frame);
+        current = cdr(current);
+    }
+    while (cdr(expr)->type !=NULL_TYPE){
+        expr = cdr(expr);
+    }
+    return eval(car(expr), frame);
 }
 
 Value *evalLambda(Value *expr, Frame *frame){
@@ -726,6 +791,15 @@ Value *eval(Value *expr, Frame *frame){
 
             if (!strcmp(first->s,"lambda")){
                 result = evalLambda(args, frame);
+                return result;
+            }
+            if (!strcmp(first->s,"set!")){
+                result = evalSet(args, frame);
+                return result;
+            }
+            
+            if (!strcmp(first->s,"let*")){
+                result = evalLetStar(args, frame);
                 return result;
             }
 
