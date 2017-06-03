@@ -1,0 +1,2 @@
+(and #t #t #t)
+(and #t #t #f)

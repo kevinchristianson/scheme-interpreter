@@ -159,16 +159,18 @@ Value *apply(Value *function, Value *args, Frame *frame){
             texit(1);
         }
         return eval(car(function->cl.functionCode), newFrame);
-    }else{
+    }else if(function->type == PRIMITIVE_TYPE){
         return function->pf(args);
+    }else{
+        printf("ERROR: function not defined\n");
+        texit(1);
+        return makeNull();
     }
 
 }
 
 //evals every value in args and saves in new list which is then returned
 Value *evalEach(Value *args, Frame *frame){
-    printer(args);
-    printf("\n");
     Value *temp = makeNull();
     while(args->type != NULL_TYPE){
         temp = cons(eval(car(args), frame), temp);
@@ -714,6 +716,69 @@ Value *evalLambda(Value *expr, Frame *frame){
     return closure;
 }
 
+Value *evalAnd(Value *expr, Frame *frame){
+    Value *new = talloc(sizeof(Value));
+    new->type = BOOL_TYPE;
+    new->i = 1;
+    while(expr->type != NULL_TYPE){
+        if(eval(car(expr), frame)->i == 0){
+            new->i = 0;
+            return new;
+        }
+        expr = cdr(expr);
+    }
+    return new;
+}
+
+Value *evalOr(Value *expr, Frame *frame){
+    Value *new = talloc(sizeof(Value));
+    new->type = BOOL_TYPE;
+    new->i = 0;
+    while(expr->type != NULL_TYPE){
+        if(eval(car(expr), frame)->i == 1){
+            new->i = 1;
+            return new;
+        }
+        expr = cdr(expr);
+    }
+    return new;
+}
+
+Value *evalCond(Value *expr, Frame *frame){
+    while(expr->type != NULL_TYPE){
+        Value *statement = car(expr);
+        if(car(statement)->type == SYMBOL_TYPE && strcmp(car(statement)->s, "else")){
+            Value *results = evalEach(cdr(statement), frame);
+                while(cdr(results)->type != NULL_TYPE){
+                    results = cdr(results);
+                }
+                if(car(results)->type == NULL_TYPE){
+                    car(results)->type = VOID_TYPE;
+                }
+                return car(results);
+        }else if(eval(car(statement), frame)->type != BOOL_TYPE){
+            printf("ERROR in COND statement: expected boolean\n");
+            texit(1);
+            return makeNull();
+        }else{
+            if(eval(car(statement), frame)->i == 1){
+                Value *results = evalEach(cdr(statement), frame);
+                while(cdr(results)->type != NULL_TYPE){
+                    results = cdr(results);
+                }
+                if(car(results)->type == NULL_TYPE){
+                    car(results)->type = VOID_TYPE;
+                }
+                return car(results);
+            }
+            expr = cdr(expr);
+        }
+    }
+    Value *result = makeNull();
+    result->type = VOID_TYPE;
+    return result;
+}
+
 // Evaluates an expression and returns the proper values
 Value *eval(Value *expr, Frame *frame){
     switch (expr->type)  {
@@ -808,7 +873,25 @@ Value *eval(Value *expr, Frame *frame){
                 while(cdr(result)->type != NULL_TYPE){
                     result = cdr(result);
                 }
+                if(car(result)->type == NULL_TYPE){
+                    car(result)->type = VOID_TYPE;
+                }
                 return car(result);
+            }
+            
+            if (!strcmp(first->s,"and")){
+                result = evalAnd(args, frame);
+                return result;
+            }
+            
+            if (!strcmp(first->s,"or")){
+                result = evalOr(args, frame);
+                return result;
+            }
+            
+            if (!strcmp(first->s,"cond")){
+                result = evalCond(args, frame);
+                return result;
             }
 
             if(first->type != SYMBOL_TYPE && first->type != CONS_TYPE){
