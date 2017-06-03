@@ -6,6 +6,61 @@
 #include <string.h>
 #include "parser.h"
 
+void printerHelper(Value *expr){
+    switch (expr->type){
+        case INT_TYPE:
+            printf("%i", expr->i);
+            break;
+        case DOUBLE_TYPE:
+            printf("%f", expr->d);
+            break;
+        case STR_TYPE:
+            printf("%s", expr->s);
+            break;
+        case NULL_TYPE:
+            break;
+        case PTR_TYPE:
+            break;
+        case BOOL_TYPE:
+            if(expr->i){
+                printf("#t");
+            } else {
+                printf("#f");
+            }
+            break;
+        case OPEN_TYPE:
+            break;
+        case CLOSE_TYPE:
+            break;
+        case SYMBOL_TYPE:
+            printf("%s", expr->s);
+            break;
+        case VOID_TYPE:
+            break;
+        case CLOSURE_TYPE:
+            printf("ERROR: Should not have printed a closure type.\n");
+            printTree(expr);
+            break;
+        case PRIMITIVE_TYPE:
+            break;
+        case CONS_TYPE:
+            while(cdr(expr)->type == CONS_TYPE){
+                printerHelper(car(expr));
+                printf(" ");
+                expr = cdr(expr);
+            }
+            
+            if(cdr(expr)->type == NULL_TYPE){
+                printerHelper(car(expr));
+            }else{
+                printf(" . ");
+                printerHelper(car(expr));
+            }
+            break;
+            
+    }
+}
+
 //helper function
 //prints first item in value list
 bool printer(Value *expr){
@@ -26,16 +81,18 @@ bool printer(Value *expr){
             break;
         case CONS_TYPE:
             printf("(");
-            while(cdr(expr) && cdr(expr)->type != NULL_TYPE){
-                printer(car(expr));
+            while(cdr(expr)->type == CONS_TYPE){
+                printerHelper(car(expr));
                 printf(" ");
                 expr = cdr(expr);
             }
+            
             if(cdr(expr)->type == NULL_TYPE){
                 printer(car(expr));
             }else{
-                printf(". ");
                 printer(car(expr));
+                printf(" . ");
+                printerHelper(cdr(expr));
             }
             printf(")");
             return true;
@@ -69,6 +126,8 @@ bool printer(Value *expr){
     }
     return false;
 }
+
+
 
 // returns the number of tokens in an expression
 int checkParamNumber(Value *expr){
@@ -113,7 +172,8 @@ Value *evalEach(Value *args, Frame *frame){
         temp = cons(eval(car(args), frame), temp);
         args = cdr(args);
     }
-
+   // printer(reverse(temp));
+//    printf("\n");
     return reverse(temp);
 }
 
@@ -195,7 +255,261 @@ Value *evalCons(Value *expr){
         printf("ERROR in CONS statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
         texit(1);
     }
-    return cons(car(expr), cdr(expr));
+    return cons(car(expr), car(cdr(expr)));
+}
+
+Value *evalMult(Value *expr){
+    if(checkParamNumber(expr) < 1){
+        printf("ERROR in * statement: expected at least 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    double total = 0.0;
+    bool hasDouble = false;
+    while(expr->type != NULL_TYPE){
+        if(car(expr)->type == INT_TYPE){
+            total = total * car(expr)->i;
+        }else if(car(expr)->type == DOUBLE_TYPE){
+            total = total * car(expr)->d;
+            hasDouble = true;
+        }else{
+            printf("ERROR in * statement: expected integer or float\n");
+            texit(1);
+        }
+        expr = cdr(expr);
+    }
+    Value *new = talloc(sizeof(Value));
+    if(hasDouble){
+        new->type = DOUBLE_TYPE;
+        new->d = total;
+    }else{
+        new->type = INT_TYPE;
+        new->i = (int) total;
+    }
+    return new;
+}
+
+Value *evalMinus(Value *expr){
+    if(checkParamNumber(expr) < 1){
+        printf("ERROR in - statement: expected at least 1 parameter, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    double result;
+    if(car(expr)->type == INT_TYPE){
+        result = car(expr)->i;
+    }else if(car(expr)->type == DOUBLE_TYPE){
+        result = car(expr)->d;
+    }else{
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    expr = cdr(expr);
+    bool hasDouble = false;
+    while(expr->type != NULL_TYPE){
+        if (car(expr)->type == INT_TYPE){
+            result -= car(expr)->i;
+        }
+        else if (car(expr)->type == DOUBLE_TYPE){
+            result -= car(expr)->d;
+            hasDouble = true;
+        }
+        else {
+            printf("%i\n", expr->type);
+            printf("ERROR: Non-real number parameter.\n");
+            texit(1);
+        }
+        expr = cdr(expr);
+    }
+    Value *shell = talloc(sizeof(Value));
+    if(hasDouble){
+        shell->type = DOUBLE_TYPE;
+        shell->d = result;
+    }else{
+        shell->type = INT_TYPE;
+        shell->i = result;
+    }
+    return shell;
+}
+
+Value *evalDiv(Value *expr){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in - statement: expected at least 1 parameter, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    double result;
+    if(car(expr)->type == INT_TYPE){
+        result = car(expr)->i;
+    }else if(car(expr)->type == DOUBLE_TYPE){
+        result = car(expr)->d;
+    }else{
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    expr = cdr(expr);
+    while(expr->type != NULL_TYPE){
+        if (car(expr)->type == INT_TYPE){
+            result = result / car(expr)->i;
+        }
+        else if (car(expr)->type == DOUBLE_TYPE){
+            result = result / car(expr)->d;
+        }
+        else {
+            printf("%i\n", expr->type);
+            printf("ERROR: Non-real number parameter.\n");
+            texit(1);
+        }
+        expr = cdr(expr);
+    }
+    Value *shell = talloc(sizeof(Value));
+    shell->type = DOUBLE_TYPE;
+    shell->d = result;
+    return shell;
+}
+
+Value *evalMod(Value *expr){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in - statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    int result;
+    if(car(expr)->type == INT_TYPE){
+        result = car(expr)->i;
+    }else{
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    expr = cdr(expr);
+    if (car(expr)->type == INT_TYPE){
+            result = result % car(expr)->i;
+        }
+    else {
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    Value *shell = talloc(sizeof(Value));
+    shell->type = INT_TYPE;
+    shell->i = result;
+    return shell;
+}
+
+Value *evalLesser(Value *expr){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in - statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    double firstArg;
+    if(car(expr)->type == INT_TYPE){
+        firstArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        firstArg = car(expr)->d;
+    } else{
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    expr = cdr(expr);
+    double secondArg;
+    if (car(expr)->type == INT_TYPE){
+        secondArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        secondArg = car(expr)->d;
+    } else {
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    int result;
+    if(firstArg < secondArg){
+        result = 1;
+    } else {
+        result = 0;
+    }
+    Value *shell = talloc(sizeof(Value));
+    shell->type = BOOL_TYPE;
+    shell->i = result;
+    return shell;
+    
+}
+
+Value *evalGreater(Value *expr){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in - statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    double firstArg;
+    if(car(expr)->type == INT_TYPE){
+        firstArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        firstArg = car(expr)->d;
+    } else{
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    expr = cdr(expr);
+    double secondArg;
+    if (car(expr)->type == INT_TYPE){
+        secondArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        secondArg = car(expr)->d;
+    } else {
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    int result;
+    if(firstArg > secondArg){
+        result = 1;
+    } else {
+        result = 0;
+    }
+    Value *shell = talloc(sizeof(Value));
+    shell->type = BOOL_TYPE;
+    shell->i = result;
+    return shell;
+    
+}
+
+Value *evalEqual(Value *expr){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in - statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    double firstArg;
+    if(car(expr)->type == INT_TYPE){
+        firstArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        firstArg = car(expr)->d;
+    } else{
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    expr = cdr(expr);
+    double secondArg;
+    if (car(expr)->type == INT_TYPE){
+        secondArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        secondArg = car(expr)->d;
+    } else {
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    int result;
+    if(firstArg == secondArg){
+        result = 1;
+    } else {
+        result = 0;
+    }
+    Value *shell = talloc(sizeof(Value));
+    shell->type = BOOL_TYPE;
+    shell->i = result;
+    return shell;
+    
 }
 
 //takes a function pointer and name as well as a frame and creates a definition for that function in the frame
@@ -222,6 +536,13 @@ void interpret(Value *tree){
     bind("car", &evalCar, topFrame);
     bind("cdr", &evalCdr, topFrame);
     bind("cons", &evalCons, topFrame);
+    bind("*", &evalMult, topFrame);
+    bind("-", &evalMinus, topFrame);
+    bind("/", &evalDiv, topFrame);
+    bind("modulo", &evalMod, topFrame);
+    bind("<", &evalLesser, topFrame);
+    bind(">", &evalGreater, topFrame);
+    bind("=", &evalEqual, topFrame);
     while(current->type != NULL_TYPE){
         if(printer(eval(car(current), topFrame))){
             printf("\n");
@@ -266,7 +587,7 @@ Value *evalIf(Value *args, Frame *frame){
 }
 
 Value *evalQuote(Value *args, Frame *frame){
-    return args;
+    return car(args);
 }
 
 //evaluates let statements and returns the proper values
