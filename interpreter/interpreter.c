@@ -26,17 +26,17 @@ bool printer(Value *expr){
             break;
         case CONS_TYPE:
             printf("(");
-            while(cdr(expr) && cdr(expr)->type != NULL_TYPE){
+            printer(car(expr));
+            /* while(cdr(expr) && cdr(expr)->type != NULL_TYPE){
                 printer(car(expr));
-                printf(" ");
                 expr = cdr(expr);
-            }
+            } 
             if(cdr(expr)->type == NULL_TYPE){
                 printer(car(expr));
-            }else{
+            }else{ 
                 printf(" . ");
                 printer(car(expr));
-            }
+            } */
             printf(")");
             return true;
             break;
@@ -113,7 +113,6 @@ Value *evalEach(Value *args, Frame *frame){
         temp = cons(eval(car(args), frame), temp);
         args = cdr(args);
     }
-
     return reverse(temp);
 }
 
@@ -186,11 +185,11 @@ Value *evalCdr(Value *expr){
         printf("ERROR in CDR statement: expected list\n");
         texit(1);
     }
-    if(cdr(expr)->type != CONS_TYPE){
+    /* if(cdr(expr)->type != CONS_TYPE){
         return car(cdr(car(expr)));
-    } else {
+    } else { */
         return cdr(car(car(expr)));
-    }
+    //}
 }
 
 //built in cons function in scheme
@@ -199,11 +198,11 @@ Value *evalCons(Value *expr){
         printf("ERROR in CONS statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
         texit(1);
     }
-    if(car(car(cdr(expr)))->type == CONS_TYPE){
+    /* if(car(car(cdr(expr)))->type == CONS_TYPE){
         return cons(car(car(expr)), car(car(cdr(expr))));
-    } else {
-        return cons(car(car(expr)), car(cdr(expr)));
-    }
+    } else { */
+        return cons(car(car(expr)), car(car(cdr(expr))));
+    //}
 }
 
 //takes a function pointer and name as well as a frame and creates a definition for that function in the frame
@@ -231,9 +230,12 @@ void interpret(Value *tree){
     bind("cdr", &evalCdr, topFrame);
     bind("cons", &evalCons, topFrame);
     while(current->type != NULL_TYPE){
-        if(printer(eval(car(current), topFrame))){
+         
+        //printf("%s\n", car(car(args))->s);
+        /* if(printer(eval(car(current), topFrame))){
             printf("\n");
-        }
+        } */
+        printer(eval(car(current), topFrame));
         current = cdr(current);
     }
 }
