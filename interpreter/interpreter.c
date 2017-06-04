@@ -595,7 +595,7 @@ Value *evalQuote(Value *args, Frame *frame){
 //evaluates let statements and returns the proper values
 Value *evalLet(Value *args, Frame *frame){
     if(checkParamNumber(args) < 2){
-        printf("ERROR in LET statement: expected 2 parameters, got %i\n", checkParamNumber(args));
+        printf("ERROR in LET statement: expected 2 or more parameters, got %i\n", checkParamNumber(args));
         texit(1);
     }
     Frame *new = talloc(sizeof(Frame));
@@ -615,7 +615,7 @@ Value *evalLet(Value *args, Frame *frame){
         value_list = cdr(value_list);
     }
 
-    while (cdr(args)->type !=NULL_TYPE){
+    while (cdr(args)->type != NULL_TYPE){
         args = cdr(args);
     }
 
@@ -679,8 +679,8 @@ Value *evalSet(Value *expr, Frame *frame){
 }
 
 Frame *letStarHelper(Value *pair, Frame *frame){
-    if(checkParamNumber(pair) != 2){
-        printf("ERROR in LET* assignment statement: expected 2 parameters, got %i\n", checkParamNumber(pair));
+    if(checkParamNumber(pair) < 2){
+        printf("ERROR in LET* assignment statement: expected 2 or more parameters, got %i\n", checkParamNumber(pair));
         texit(1);
     }
     Frame *new = talloc(sizeof(Frame));
@@ -693,7 +693,7 @@ Frame *letStarHelper(Value *pair, Frame *frame){
 
 Value *evalLetStar(Value *expr, Frame *frame){
     if(checkParamNumber(expr) < 2){
-        printf("ERROR in LET* statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        printf("ERROR in LET* statement: expected 2 or more parameters, got %i\n", checkParamNumber(expr));
         texit(1);
     }
     Value *current = car(expr);
@@ -702,6 +702,32 @@ Value *evalLetStar(Value *expr, Frame *frame){
         current = cdr(current);
     }
     while (cdr(expr)->type !=NULL_TYPE){
+        expr = cdr(expr);
+    }
+    return eval(car(expr), frame);
+}
+
+Frame *letRecHelper(Value *pair, Frame *frame){
+    if(checkParamNumber(pair) < 2){
+        printf("ERROR in LET* assignment statement: expected 2 or more parameters, got %i\n", checkParamNumber(pair));
+        texit(1);
+    }
+    frame->bindings = cons(eval(car(cdr(pair)), frame), frame->bindings);
+    frame->bindings = cons(car(pair), frame->bindings);
+    return frame;
+}
+
+Value *evalLetRec(Value *expr, Frame *frame){
+    if(checkParamNumber(expr) < 2){
+        printf("ERROR in LET* statement: expected 2 or more parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    Value *current = car(expr);
+    while(current->type != NULL_TYPE){
+        frame = letRecHelper(car(current), frame);
+        current = cdr(current);
+    }
+    while (cdr(expr)->type != NULL_TYPE){
         expr = cdr(expr);
     }
     return eval(car(expr), frame);
@@ -858,6 +884,7 @@ Value *eval(Value *expr, Frame *frame){
                 result = evalLambda(args, frame);
                 return result;
             }
+            
             if (!strcmp(first->s,"set!")){
                 result = evalSet(args, frame);
                 return result;
@@ -865,6 +892,11 @@ Value *eval(Value *expr, Frame *frame){
             
             if (!strcmp(first->s,"let*")){
                 result = evalLetStar(args, frame);
+                return result;
+            }
+            
+            if (!strcmp(first->s,"letrec")){
+                result = evalLetRec(args, frame);
                 return result;
             }
             

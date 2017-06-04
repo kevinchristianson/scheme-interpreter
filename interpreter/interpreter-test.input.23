@@ -1,0 +1,5 @@
+(letrec ([sum (lambda (x)
+                (if (= 0 x)
+                    0
+                    (+ x (sum (- x 1)))))])
+  (sum 5))
