@@ -1,11 +1,11 @@
-(define A
-  (lambda (k x1 x2 x3 x4 x5)
-    (letrec ((B
-           (lambda ()
-             (set! k (- k 1))
-             (A k B x1 x2 x3 x4))))
-      (if (<= k 0)
-          (+ (x4) (x5))
-          (B)))))
-
-(A 10 (lambda () 1) (lambda () -1) (lambda () -1) (lambda () 1) (lambda () 0))
+(letrec ((even?
+          (lambda (n)
+            (if (= 0 n)
+                #t
+                (odd? (- n 1)))))
+         (odd?
+          (lambda (n)
+            (if (= 0 n)
+                #f
+                (even? (- n 1))))))
+  (even? 88))     
