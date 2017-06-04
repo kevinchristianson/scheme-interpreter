@@ -1,0 +1,3 @@
+(car (quote (ABC EFG)))
+
+(cdr (quote (ABC EFG)))

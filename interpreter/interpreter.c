@@ -15,7 +15,7 @@ void printerHelper(Value *expr){
             printf("%f", expr->d);
             break;
         case STR_TYPE:
-            printf("%s", expr->s);
+            printf("\"%s\"", expr->s);
             break;
         case NULL_TYPE:
             break;
@@ -74,15 +74,16 @@ bool printer(Value *expr){
             return true;
             break;
         case STR_TYPE:
-            printf("%s", expr->s);
+            printf("\"%s\"", expr->s);
             return true;
             break;
         case NULL_TYPE:
+            printf("()\n");
             break;
         case CONS_TYPE:
             printf("(");
             while(cdr(expr)->type == CONS_TYPE){
-                printerHelper(car(expr));
+                printer(car(expr));
                 printf(" ");
                 expr = cdr(expr);
             }
@@ -131,7 +132,7 @@ bool printer(Value *expr){
 
 // returns the number of tokens in an expression
 int checkParamNumber(Value *expr){
-    Value * current = expr;
+    Value *current = expr;
     int total_args = 0;
     while(current->type != NULL_TYPE){
         current = cdr(current);
@@ -514,6 +515,45 @@ Value *evalEqual(Value *expr){
     
 }
 
+Value *evalSpec(Value *expr){
+    if(checkParamNumber(expr) != 2){
+        printf("ERROR in - statement: expected 2 parameters, got %i\n", checkParamNumber(expr));
+        texit(1);
+    }
+    double firstArg;
+    if(car(expr)->type == INT_TYPE){
+        firstArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        firstArg = car(expr)->d;
+    } else{
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    expr = cdr(expr);
+    double secondArg;
+    if (car(expr)->type == INT_TYPE){
+        secondArg = car(expr)->i;
+    } else if(car(expr)->type == DOUBLE_TYPE){
+        secondArg = car(expr)->d;
+    } else {
+        printf("%i\n", expr->type);
+        printf("ERROR: Non-real number parameter.\n");
+        texit(1);
+    }
+    int result;
+    if(firstArg <= secondArg){
+        result = 1;
+    } else {
+        result = 0;
+    }
+    Value *shell = talloc(sizeof(Value));
+    shell->type = BOOL_TYPE;
+    shell->i = result;
+    return shell;
+    
+}
+
 //takes a function pointer and name as well as a frame and creates a definition for that function in the frame
 void bind(char *name, Value *(*function)(struct Value *), Frame *frame) {
     // Add primitive functions to top-level bindings list
@@ -545,6 +585,7 @@ void interpret(Value *tree){
     bind("<", &evalLesser, topFrame);
     bind(">", &evalGreater, topFrame);
     bind("=", &evalEqual, topFrame);
+    bind("<=", &evalSpec, topFrame);
     while(current->type != NULL_TYPE){
         if(printer(eval(car(current), topFrame))){
             printf("\n");
@@ -589,7 +630,7 @@ Value *evalIf(Value *args, Frame *frame){
 }
 
 Value *evalQuote(Value *args, Frame *frame){
-    return args;
+    return car(args);
 }
 
 //evaluates let statements and returns the proper values
